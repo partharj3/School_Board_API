@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -46,6 +47,11 @@ public class ApplicationExceptionHandler extends ResponseEntityExceptionHandler 
 		// ResponseEntity<Object>(ResponseStructure OBJECT in the form of MAP, HttpStatus);
 	}
 
+	@ExceptionHandler(DataIntegrityViolationException.class)
+	private ResponseEntity<Object> handleDataDuplicationException(DataIntegrityViolationException exp){
+		return structure(HttpStatus.NOT_ACCEPTABLE,"Unable to save the data","Key or Email duplication is Prohibited");
+	}
+	
 	@ExceptionHandler(UnauthorizedRoleException.class)
 	private ResponseEntity<Object> handleUnauthorizedUserRole(UnauthorizedRoleException exp){
 		return structure(HttpStatus.NOT_ACCEPTABLE,exp.getMessage(),"Unauthorized User Role. ADMIN already Exists");
@@ -54,5 +60,20 @@ public class ApplicationExceptionHandler extends ResponseEntityExceptionHandler 
 	@ExceptionHandler(UserNotFoundByIdException.class)
 	private ResponseEntity<Object> handleUserNotFoundById(UserNotFoundByIdException exp){
 		return structure(HttpStatus.NOT_FOUND,exp.getMessage(),"User ID not exists");
+	}
+	
+	@ExceptionHandler(UnauthorizedUserException.class)
+	private ResponseEntity<Object> handleUnauthorizedUserException(UnauthorizedUserException exp){
+		return structure(HttpStatus.UNAUTHORIZED,exp.getMessage(),"Unauthorized User to Proceed");
+	}
+	
+	@ExceptionHandler(UserDataNotExistsException.class)
+	private ResponseEntity<Object> handleUserDataNotExistsException(UserDataNotExistsException exp){
+		return structure(HttpStatus.NOT_FOUND,exp.getMessage(),"User Data Not Exists");
+	}
+	
+	@ExceptionHandler(DataAlreadyExistsException.class)
+	private ResponseEntity<Object> handleDataAlreadyExistsException(DataAlreadyExistsException exp){
+		return structure(HttpStatus.FOUND,exp.getMessage(),"Data Already Exists");
 	}
 }

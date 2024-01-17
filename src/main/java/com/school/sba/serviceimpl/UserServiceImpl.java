@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.school.sba.entity.User;
 import com.school.sba.enums.UserRole;
 import com.school.sba.exception.UnauthorizedRoleException;
+import com.school.sba.exception.UserDataNotExistsException;
 import com.school.sba.exception.UserNotFoundByIdException;
 import com.school.sba.repository.UserRepository;
 import com.school.sba.requestdto.UserRequest;
@@ -103,12 +104,16 @@ public class UserServiceImpl implements UserService{
 	@Override
 	public ResponseEntity<ResponseStructure<UserResponse>> deleteUser(int userid) {
 		User user = userRepo.findById(userid).orElseThrow(()-> new UserNotFoundByIdException("Failed to DELETE the user"));
-		user.setIsDeleted(true);
-		userRepo.save(user);
-		
-		structure.setStatusCode(HttpStatus.OK.value());
-		structure.setMessage("User Data Deleted");
-		structure.setData(mapToUserResponse(user));
+		if(!user.getIsDeleted()) {
+			user.setIsDeleted(true);
+			userRepo.save(user);
+			
+			structure.setStatusCode(HttpStatus.OK.value());
+			structure.setMessage("User Data Deleted");
+			structure.setData(mapToUserResponse(user));
+		}
+		else 
+			throw new UserDataNotExistsException("Failed to DELETE the user");
 		
 		return new ResponseEntity<ResponseStructure<UserResponse>>(structure, HttpStatus.OK);
 	}
