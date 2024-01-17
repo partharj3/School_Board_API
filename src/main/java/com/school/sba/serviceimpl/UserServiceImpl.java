@@ -1,10 +1,7 @@
 package com.school.sba.serviceimpl;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -52,10 +49,29 @@ public class UserServiceImpl implements UserService{
 	
 	@Override
 	public ResponseEntity<ResponseStructure<UserResponse>> addUser(UserRequest request) {
-				
-		List<User> exist = userRepo.findUserByUserRole(request.getUserRole());
-		if(exist.size()==0 && request.getUserRole()==UserRole.ADMIN || request.getUserRole()!=UserRole.ADMIN) {
-			User user = userRepo.save(mapToUser(request));
+		
+//		List<User> exist = userRepo.findUserByUserRole(request.getUserRole());
+//		if(exist.size()==0 && request.getUserRole()==UserRole.ADMIN || request.getUserRole()!=UserRole.ADMIN) {
+//			User user1 = mapToUser(request);
+//			user1.setIsDeleted(false);
+//			
+//			User user = userRepo.save(user1);
+//			
+//			structure.setStatusCode(HttpStatus.CREATED.value());
+//			structure.setMessage("User Created Successfully");
+//			structure.setData(mapToUserResponse(user));
+//			
+//			return new ResponseEntity<ResponseStructure<UserResponse>>(structure, HttpStatus.CREATED);
+//		}
+//		else
+//			throw new UnauthorizedRoleException("Cannot Proceed Further");
+		
+		UserRole role = request.getUserRole();
+		if(role!=UserRole.ADMIN || role==UserRole.ADMIN && !userRepo.existsByUserRole(role) ) {
+			User user1 = mapToUser(request);
+			user1.setIsDeleted(false);
+			
+			User user = userRepo.save(user1);
 			
 			structure.setStatusCode(HttpStatus.CREATED.value());
 			structure.setMessage("User Created Successfully");
@@ -71,11 +87,30 @@ public class UserServiceImpl implements UserService{
 	public ResponseEntity<ResponseStructure<UserResponse>> findUser(int userid) {
 		User user = userRepo.findById(userid).orElseThrow(()-> new UserNotFoundByIdException("Failed to FETCH the user"));
 		
-		structure.setStatusCode(HttpStatus.FOUND.value());
-		structure.setMessage("User Data Found");
+		// Logic to check is that already deleted or not
+		boolean deleted = user.getIsDeleted();
+		if(!deleted) {
+			structure.setStatusCode(HttpStatus.FOUND.value());
+			structure.setMessage("User Data Found");
+			structure.setData(mapToUserResponse(user));
+			
+			return new ResponseEntity<ResponseStructure<UserResponse>>(structure, HttpStatus.FOUND);
+		}
+		throw new UserNotFoundByIdException("Failed to FETCH the user");
+	}
+
+	
+	@Override
+	public ResponseEntity<ResponseStructure<UserResponse>> deleteUser(int userid) {
+		User user = userRepo.findById(userid).orElseThrow(()-> new UserNotFoundByIdException("Failed to DELETE the user"));
+		user.setIsDeleted(true);
+		userRepo.save(user);
+		
+		structure.setStatusCode(HttpStatus.OK.value());
+		structure.setMessage("User Data Deleted");
 		structure.setData(mapToUserResponse(user));
 		
-		return new ResponseEntity<ResponseStructure<UserResponse>>(structure, HttpStatus.FOUND);
+		return new ResponseEntity<ResponseStructure<UserResponse>>(structure, HttpStatus.OK);
 	}
 
 }

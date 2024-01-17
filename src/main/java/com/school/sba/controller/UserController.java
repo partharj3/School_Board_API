@@ -2,6 +2,7 @@ package com.school.sba.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +14,8 @@ import com.school.sba.responsedto.UserResponse;
 import com.school.sba.service.UserService;
 import com.school.sba.util.ResponseStructure;
 
+import jakarta.validation.Valid;
+
 @RestController
 public class UserController {
 
@@ -20,7 +23,7 @@ public class UserController {
 	private UserService userService;
 	
 	@PostMapping("/users/register")
-	public ResponseEntity<ResponseStructure<UserResponse>> addUser(@RequestBody UserRequest request){
+	public ResponseEntity<ResponseStructure<UserResponse>> addUser(@RequestBody @Valid UserRequest request){
 		return userService.addUser(request);
 	}
 	
@@ -29,4 +32,8 @@ public class UserController {
 		return userService.findUser(userid);
 	}
 	
+	@DeleteMapping("/users/{userid}")
+	public ResponseEntity<ResponseStructure<UserResponse>> deleteUserById(@PathVariable int userid){
+		return userService.deleteUser(userid);
+	}
 }
