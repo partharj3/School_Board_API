@@ -76,4 +76,14 @@ public class ApplicationExceptionHandler extends ResponseEntityExceptionHandler 
 	private ResponseEntity<Object> handleDataAlreadyExistsException(DataAlreadyExistsException exp){
 		return structure(HttpStatus.FOUND,exp.getMessage(),"Data Already Exists");
 	}
+	
+	@ExceptionHandler(SchoolNotFoundByIdException.class)
+	private ResponseEntity<Object> handleSchoolNotFoundByIdException(SchoolNotFoundByIdException exp){
+		return structure(HttpStatus.NOT_FOUND,exp.getMessage(),"School Data Not FOUND By ID");
+	}
+	
+	@ExceptionHandler(ScheduleNotExistsException.class)
+	private ResponseEntity<Object> handleScheduleNotExistsException(ScheduleNotExistsException exp){
+		return structure(HttpStatus.NOT_FOUND,exp.getMessage(),"Schedule Not Created Yet");
+	}
 }

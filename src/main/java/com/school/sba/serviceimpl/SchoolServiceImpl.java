@@ -2,12 +2,10 @@ package com.school.sba.serviceimpl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.school.sba.entity.School;
-import com.school.sba.entity.User;
 import com.school.sba.enums.UserRole;
 import com.school.sba.exception.DataAlreadyExistsException;
 import com.school.sba.exception.UnauthorizedUserException;
@@ -52,24 +50,77 @@ public class SchoolServiceImpl implements SchoolService{
 	
 	@Override
 	public ResponseEntity<ResponseStructure<SchoolResponse>> addSchool(SchoolRequest request, int userId) {
-		User user = userRepo.findById(userId).orElseThrow(()->new UserNotFoundByIdException("Failed to FETCH the User"));
-		System.out.println("count: "+schoolrepo.count());
-		if(user.getUserRole()==UserRole.ADMIN) {
-			if(schoolrepo.count()!=0)
-					throw new DataAlreadyExistsException("Failed to CREATE a new School Data");
-			
-			School saved = schoolrepo.save(mapToSchool(request));
-			
-			structure.setStatusCode(HttpStatus.CREATED.value());
-			structure.setMessage("School Created Successfully By the ADMIN");
-			structure.setData(mapToSchoolResponse(saved));
-			
-			return new ResponseEntity<ResponseStructure<SchoolResponse>>(structure,HttpStatus.CREATED);
-		}
-		else
-			throw new UnauthorizedUserException("Failed to Create School !");
+		
+		return userRepo.findById(userId)
+				.map(user -> {
+					if(user.getUserRole().equals(UserRole.ADMIN)) {
+						if(user.getUserSchool()==null) {
+							School school = schoolrepo.save(mapToSchool(request));
+							user.setUserSchool(school);
+							userRepo.save(user);
+							
+							structure.setStatusCode(HttpStatus.CREATED.value());
+							structure.setMessage("School Created Successfully By the ADMIN");
+							structure.setData(mapToSchoolResponse(school));
+							
+							return new ResponseEntity<ResponseStructure<SchoolResponse>>(structure,HttpStatus.CREATED);
+						}
+						else 
+							throw new DataAlreadyExistsException("Failed to CREATE a new School Data");
+					}
+					else
+						throw new UnauthorizedUserException("Failed to Create School !");
+				})
+				.orElseThrow(()->new UserNotFoundByIdException("Failed to Create School !"));
+		
+//		User user = userRepo.findById(userId).orElseThrow(()->new UserNotFoundByIdException("Failed to Create School !"));
+//		if(user.getUserRole()==UserRole.ADMIN) {
+//			if(schoolrepo.count()!=0)
+//					throw new DataAlreadyExistsException("Failed to CREATE a new School Data");
+//			
+//			School saved = schoolrepo.save(mapToSchool(request));
+//			
+//			structure.setStatusCode(HttpStatus.CREATED.value());
+//			structure.setMessage("School Created Successfully By the ADMIN");
+//			structure.setData(mapToSchoolResponse(saved));
+//			
+//			return new ResponseEntity<ResponseStructure<SchoolResponse>>(structure,HttpStatus.CREATED);
+//		}
+//		else
+//			throw new UnauthorizedUserException("Failed to Create School !");
 	}
 
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 //	@Override
 //	public ResponseEntity<ResponseStructure<SchoolResponse>> addSchool(SchoolRequest schoolreq) {
 //

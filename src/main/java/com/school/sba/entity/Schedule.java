@@ -7,12 +7,19 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class Schedule {
 
 	@Id
@@ -21,13 +28,13 @@ public class Schedule {
 	private LocalTime opensAt;
 	private LocalTime closesAt;
 	private int classHoursPerDay;
-	private Duration classHoursLength;
+	private Duration classHoursLengthInMinutes;
 	private LocalTime breakTime;
-	private Duration breakLength;
+	private Duration breakLengthInMinutes;
 	private LocalTime lunchTime;
-	private Duration lunchLength;
+	private Duration lunchLengthInMinutes;
 
-//	@OneToOne
-//	private School school;
+	@OneToOne(mappedBy = "schedule")
+	private School school;
 	
 }
