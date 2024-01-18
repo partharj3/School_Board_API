@@ -36,6 +36,9 @@ public class School {
 	@OneToMany(mappedBy="userSchool")
 	private List<User> user;
 	
+	@OneToMany(mappedBy = "academicSchool")
+	private List<AcademicProgram> academicProgram;
+	
 //	@OneToMany(mappedBy="school")
 //	private List<ClassRoom> classroom;
 

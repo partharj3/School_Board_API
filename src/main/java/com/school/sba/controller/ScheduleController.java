@@ -14,6 +14,8 @@ import com.school.sba.responsedto.ScheduleResponse;
 import com.school.sba.service.ScheduleService;
 import com.school.sba.util.ResponseStructure;
 
+import jakarta.validation.Valid;
+
 @RestController
 public class ScheduleController {
 
@@ -21,7 +23,7 @@ public class ScheduleController {
 	private ScheduleService scheduleService;
 	
 	@PostMapping("/schools/{schoolId}/schedules")
-	public ResponseEntity<ResponseStructure<ScheduleResponse>> addSchedule(@RequestBody ScheduleRequest request,@PathVariable int schoolId){
+	public ResponseEntity<ResponseStructure<ScheduleResponse>> addSchedule(@RequestBody @Valid ScheduleRequest request,@PathVariable int schoolId){
 		return scheduleService.addSchedule(request,schoolId);
 	}
 	
@@ -31,7 +33,7 @@ public class ScheduleController {
 	}
 	
 	@PutMapping("/schedules/{scheduleId}")
-	public ResponseEntity<ResponseStructure<ScheduleResponse>> updateSchedule(@PathVariable int scheduleId, @RequestBody ScheduleRequest request){
+	public ResponseEntity<ResponseStructure<ScheduleResponse>> updateSchedule(@PathVariable int scheduleId, @RequestBody @Valid ScheduleRequest request){
 		return scheduleService.updateSchedule(scheduleId,request);
 	}
 	
