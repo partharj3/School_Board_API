@@ -45,6 +45,13 @@ public class SubjectServiceImpl implements SubjectService{
 				.build();
 	}
 	
+	private static String removeUpperCamelCaseAndExtraSpace(String str) {
+	    return str
+	    		.replaceAll("(\\p{Lu})", " $1") // removes camel casing
+	    		.replaceAll("\\s+", " ")        // removes extra white spaces
+	    		.trim().toLowerCase();          // removes leading, trailing white spaces
+	}
+	
 	@Override
 	public ResponseEntity<ResponseStructure<AcademicProgramResponse>> addSubjectList(int programId,SubjectRequest request) {
 		
@@ -54,16 +61,15 @@ public class SubjectServiceImpl implements SubjectService{
 					request.getSubjectNames().forEach(name -> {
 						subjects.add(
 								subjectRepo.findBySubjectName(name).map(subject -> {
-							return subject;
-						}).orElseGet(() -> {
-							Subject subject = new Subject();
-							subject.setSubjectName(name.toLowerCase());
-							subjectRepo.save(subject);
-							
-							return subject;
-						})
-								);
-						
+								return subject;
+								})
+								.orElseGet(() -> {
+								Subject subject = new Subject();
+								subject.setSubjectName(removeUpperCamelCaseAndExtraSpace(name));
+								subjectRepo.save(subject);
+								return subject;
+								})
+							);
 					});
 					
 					program.setSubjectList(subjects);
