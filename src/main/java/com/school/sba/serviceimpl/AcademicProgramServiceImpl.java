@@ -15,6 +15,7 @@ import com.school.sba.exception.SchoolNotFoundByIdException;
 import com.school.sba.repository.AcademicProgramRepository;
 import com.school.sba.repository.SchoolRepo;
 import com.school.sba.requestdto.AcademicProgramRequest;
+import com.school.sba.requestdto.SubjectRequest;
 import com.school.sba.responsedto.AcademicProgramResponse;
 import com.school.sba.service.AcademicProgramService;
 import com.school.sba.util.ResponseStructure;
@@ -94,8 +95,6 @@ public class AcademicProgramServiceImpl implements AcademicProgramService{
 					return new ResponseEntity<ResponseStructure<List<AcademicProgramResponse>>>(structure,HttpStatus.FOUND);
 				})
 				.orElseThrow(()-> new SchoolNotFoundByIdException("Failed to FETCH All Academics"));
-	}
-	
-	
-	
+	}	
+
 }

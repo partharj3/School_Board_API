@@ -86,4 +86,9 @@ public class ApplicationExceptionHandler extends ResponseEntityExceptionHandler 
 	private ResponseEntity<Object> handleScheduleNotExistsException(ScheduleNotExistsException exp){
 		return structure(HttpStatus.NOT_FOUND,exp.getMessage(),"Schedule Not Created Yet");
 	}
+	
+	@ExceptionHandler(AcademicProgramNotExistsByIdException.class)
+	private ResponseEntity<Object> handleAcademicProgramNotFoundById(AcademicProgramNotExistsByIdException exp){
+		return structure(HttpStatus.NOT_FOUND,exp.getMessage(),"No Program Exist by this ID");
+	}
 }

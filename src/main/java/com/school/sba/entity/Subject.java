@@ -17,7 +17,6 @@ public class Subject {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int subjectId;
 	
-	@Column(unique = true)
 	private String subjectName;
 
 //	@OneToOne
