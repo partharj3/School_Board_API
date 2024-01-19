@@ -11,10 +11,12 @@ import org.springframework.stereotype.Service;
 import com.school.sba.entity.AcademicProgram;
 import com.school.sba.entity.Subject;
 import com.school.sba.exception.AcademicProgramNotExistsByIdException;
+import com.school.sba.exception.EmptyListException;
 import com.school.sba.repository.AcademicProgramRepository;
 import com.school.sba.repository.SubjectRepository;
 import com.school.sba.requestdto.SubjectRequest;
 import com.school.sba.responsedto.AcademicProgramResponse;
+import com.school.sba.responsedto.SubjectResponse;
 import com.school.sba.service.SubjectService;
 import com.school.sba.util.ResponseStructure;
 
@@ -27,8 +29,12 @@ public class SubjectServiceImpl implements SubjectService{
 	@Autowired
 	private AcademicProgramRepository academicsRepo;
 	
-	@Autowired
-	private ResponseStructure<AcademicProgramResponse> structure;
+	private SubjectResponse mapToSubjectResponse(Subject subject) {
+		return SubjectResponse.builder()
+				   .subjectId(subject.getSubjectId())
+				   .subjectName(subject.getSubjectName())
+				   .build();
+	}	
 	
 	private AcademicProgramResponse mapToAcademicProgramResponse(AcademicProgram academics) {
 		List<String> subjects = new ArrayList<>();
@@ -65,7 +71,7 @@ public class SubjectServiceImpl implements SubjectService{
 								})
 								.orElseGet(() -> {
 								Subject subject = new Subject();
-								subject.setSubjectName(removeUpperCamelCaseAndExtraSpace(name));
+								subject.setSubjectName(name.toLowerCase());
 								subjectRepo.save(subject);
 								return subject;
 								})
@@ -74,6 +80,8 @@ public class SubjectServiceImpl implements SubjectService{
 					
 					program.setSubjectList(subjects);
 					academicsRepo.save(program);
+					
+					ResponseStructure<AcademicProgramResponse> structure = new ResponseStructure<>();
 					
 					structure.setStatusCode(HttpStatus.CREATED.value());
 					structure.setMessage("Subject List added to the Program : "+program.getProgramName());
@@ -108,5 +116,25 @@ public class SubjectServiceImpl implements SubjectService{
 //					return new ResponseEntity<ResponseStructure<AcademicProgramResponse>>(structure, HttpStatus.CREATED);
 //				})
 //				.orElseThrow(()-> new AcademicProgramNotExistsByIdException("Failed to ADD Subject List to this PROGRAM"));
-	}	
+	}
+
+	
+	@Override
+	public ResponseEntity<ResponseStructure<List<SubjectResponse>>> findAllSubject() {
+		List<Subject> list =  subjectRepo.findAll();
+		if(list.isEmpty()) 
+			throw new EmptyListException("Failed to FETCH Subject List");
+		else {
+			List<SubjectResponse> responseList = new ArrayList<>();
+			list.forEach(subject -> responseList.add(mapToSubjectResponse(subject)));
+			
+			ResponseStructure<List<SubjectResponse>> structure = new ResponseStructure<>();
+			
+			structure.setStatusCode(HttpStatus.FOUND.value());
+			structure.setMessage("Subject List Found");
+			structure.setData(responseList);
+			
+			return new ResponseEntity<ResponseStructure<List<SubjectResponse>>>(structure, HttpStatus.FOUND);
+		}
+	}
 }

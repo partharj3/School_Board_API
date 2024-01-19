@@ -91,4 +91,19 @@ public class ApplicationExceptionHandler extends ResponseEntityExceptionHandler 
 	private ResponseEntity<Object> handleAcademicProgramNotFoundById(AcademicProgramNotExistsByIdException exp){
 		return structure(HttpStatus.NOT_FOUND,exp.getMessage(),"No Program Exist by this ID");
 	}
+	
+	@ExceptionHandler(IllegalRequestException.class)
+	private ResponseEntity<Object> handleIllegalArgumentException(IllegalRequestException exp){
+		return structure(HttpStatus.BAD_REQUEST,exp.getMessage(),"Illegal Request to Proceed");
+	}
+	
+	@ExceptionHandler(EmptyListException.class)
+	private ResponseEntity<Object> handleEmptyListException(EmptyListException exp){
+		return structure(HttpStatus.NO_CONTENT,exp.getMessage(),"List is Empty");
+	}
+	
+	@ExceptionHandler(SubjectNotFoundByIdException.class)
+	private ResponseEntity<Object> handleSubjectNotFoundByIdException(SubjectNotFoundByIdException exp){
+		return structure(HttpStatus.NOT_FOUND,exp.getMessage(),"No Subject Exist by this ID");
+	}
 }

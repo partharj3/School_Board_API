@@ -1,15 +1,25 @@
 package com.school.sba.serviceimpl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import com.school.sba.entity.AcademicProgram;
 import com.school.sba.entity.User;
 import com.school.sba.enums.UserRole;
+import com.school.sba.exception.AcademicProgramNotExistsByIdException;
+import com.school.sba.exception.IllegalRequestException;
+import com.school.sba.exception.SubjectNotFoundByIdException;
 import com.school.sba.exception.UnauthorizedRoleException;
 import com.school.sba.exception.UserDataNotExistsException;
 import com.school.sba.exception.UserNotFoundByIdException;
+import com.school.sba.repository.AcademicProgramRepository;
+import com.school.sba.repository.SubjectRepository;
 import com.school.sba.repository.UserRepository;
 import com.school.sba.requestdto.UserRequest;
 import com.school.sba.responsedto.UserResponse;
@@ -21,6 +31,12 @@ public class UserServiceImpl implements UserService{
 	
 	@Autowired
 	private UserRepository userRepo;
+	
+	@Autowired
+	private AcademicProgramRepository academicRepo;
+	
+	@Autowired
+	private SubjectRepository subjectRepo;
 	
 	@Autowired
 	private ResponseStructure<UserResponse> structure;
@@ -99,7 +115,6 @@ public class UserServiceImpl implements UserService{
 		}
 		throw new UserNotFoundByIdException("Failed to FETCH the user");
 	}
-
 	
 	@Override
 	public ResponseEntity<ResponseStructure<UserResponse>> deleteUser(int userid) {
@@ -116,6 +131,57 @@ public class UserServiceImpl implements UserService{
 			throw new UserDataNotExistsException("Failed to DELETE the user");
 		
 		return new ResponseEntity<ResponseStructure<UserResponse>>(structure, HttpStatus.OK);
+	}
+
+	@Override
+	public ResponseEntity<ResponseStructure<UserResponse>> setUserToAcademics(int userId, int programId) {
+		return userRepo.findById(userId)
+				.map(user -> {
+					AcademicProgram pro = null;
+					if(user.getUserRole().equals(UserRole.ADMIN))
+						throw new IllegalRequestException("Failed to SET user to THIS PROGRAM");
+					else{
+						pro = academicRepo.findById(programId)
+							.map(program -> {
+								user.getAcademicprograms().add(program);
+								userRepo.save(user);
+								program.getUsers().add(user);
+								program = academicRepo.save(program);
+								return program;
+								})
+							.orElseThrow(() -> new AcademicProgramNotExistsByIdException("Failed to SET user to THIS PROGRAM"));
+						}
+					structure.setStatusCode(HttpStatus.OK.value());
+					structure.setMessage(user.getUserRole()+" assigned with the Program "+pro.getProgramName());
+					structure.setData(mapToUserResponse(user));
+					
+					return new ResponseEntity<ResponseStructure<UserResponse>>(structure, HttpStatus.OK); 
+				})
+				.orElseThrow(()-> new UserNotFoundByIdException("Failed to SET user to THIS PROGRAM"));
+	}
+
+	
+	@Override
+	public ResponseEntity<ResponseStructure<UserResponse>> addSubjectToTeacher(int userId, int subjectId) {
+		return userRepo.findById(userId)
+				.map( user -> {
+					if(user.getUserRole().equals(UserRole.TEACHER)) {
+						subjectRepo.findById(subjectId)
+						.map(subject -> {
+							user.setSubject(subject);
+							return userRepo.save(user);
+						})
+						.orElseThrow(() -> new SubjectNotFoundByIdException("Failed to ADD Subject to user"));
+					
+					structure.setStatusCode(HttpStatus.OK.value());
+					structure.setMessage("Subject set to TEACHER");
+					structure.setData(mapToUserResponse(user));
+					
+					return new ResponseEntity<ResponseStructure<UserResponse>>(structure,HttpStatus.OK);
+					}
+					throw new IllegalRequestException("Failed to ADD, Invalid User");
+				})
+				.orElseThrow(() -> new UserNotFoundByIdException("Failed to ADD Subject to user"));
 	}
 
 }

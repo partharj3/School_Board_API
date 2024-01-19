@@ -49,8 +49,11 @@ public class User {
 	@ManyToOne
 	private School userSchool;
 	
-	@ManyToMany(mappedBy = "user")
-	private List<AcademicProgram> academicprogram;
+	@ManyToMany(mappedBy = "users")
+	private List<AcademicProgram> academicprograms;
+	
+	@ManyToOne
+	private Subject subject; 
 	
 //	@ManyToOne
 //	private ClassHour classhour;

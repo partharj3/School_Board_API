@@ -44,7 +44,7 @@ public class AcademicProgram {
 	private School academicSchool;
 	
 	@ManyToMany
-	private List<User> user;
+	private List<User> users;
 	
 	@ManyToMany
 	private List<Subject> subjectList;
