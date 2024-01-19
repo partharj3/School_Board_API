@@ -114,40 +114,58 @@ public class AcademicProgramServiceImpl implements AcademicProgramService{
 
 	@Override
 	public ResponseEntity<ResponseStructure<AcademicProgramResponse>> updateSubjectList(int programId, SubjectRequest request) {
-
+		System.out.println("************UPDATION******************");
 		return academicRepo.findById(programId)
-				.map(program -> {					
-					Set<String> list = new HashSet<>();
-					program.getSubjectList().forEach(subject -> list.add(removeUpperCamelCaseAndExtraSpace(subject.getSubjectName())));
-					request.getSubjectNames().forEach(name -> list.add(removeUpperCamelCaseAndExtraSpace(name.toLowerCase())));
+				.map(program ->{
+					List<Subject> existing = (program.getSubjectList()!=null ? program.getSubjectList() : new ArrayList<>());
 					
-					List<Subject> updated = new ArrayList<Subject>();
-					
-					list.forEach(subjectName ->
-					{
-						Subject out = subjectrepo.findBySubjectName(subjectName).map(subject ->{
- 							return subject;
-						})
-						.orElseGet(() -> {
-							Subject subject = new Subject();
-							subject.setSubjectName(subjectName.toLowerCase());
-							subjectrepo.save(subject);
-							return subject;
-						});
-						updated.add(out);
+					request.getSubjectNames().forEach(subjectName -> {
+						boolean isPresent = false;
+						for(Subject subject : existing) {
+							isPresent = (subjectName.equalsIgnoreCase(subject.getSubjectName()) ? true : false);
+							if(isPresent)
+								break;
+							}
+						if(!isPresent) {
+							existing.add(subjectrepo.findBySubjectName(subjectName)
+									.orElseGet(() -> 
+										subjectrepo.save(Subject.builder().subjectName(subjectName).build())));
+						}
 					});
+					
+					List<Subject> toBeRemoved =  new ArrayList<>();
+					existing.forEach(subject -> {
+						boolean isPresent = false;
+						for(String name: request.getSubjectNames()) {
+							isPresent = (subject.getSubjectName().equalsIgnoreCase(name) ? true : false);
+							if(isPresent)
+								break;
+						}
+						if(!isPresent) toBeRemoved.add(subject);
+					});
+					
+					existing.removeAll(toBeRemoved);
+					 program.setSubjectList(existing);
+				        academicRepo.save(program);
 
-					program.setSubjectList(updated);
-					academicRepo.save(program);
-					
-					structure.setStatusCode(HttpStatus.OK.value());
-					structure.setMessage("Subject List updated to PROGRAM "+program.getProgramName());
-					structure.setData(mapToAcademicProgramResponse(program));
-					
-					return new ResponseEntity<ResponseStructure<AcademicProgramResponse>>(structure, HttpStatus.OK);
-				})
-				.orElseThrow(()-> new AcademicProgramNotExistsByIdException("Failed to UPDATE Subject List to this Program ID"));
+				        structure.setStatusCode(HttpStatus.OK.value());
+				        structure.setMessage("Subject List updated to PROGRAM " + program.getProgramName());
+				        structure.setData(mapToAcademicProgramResponse(program));
+
+				        return new ResponseEntity<>(structure, HttpStatus.OK);
+				    })
+				    .orElseThrow(() -> new AcademicProgramNotExistsByIdException("Failed to UPDATE Subject List to this Program ID"));		
 	}	
+
+	private List<Subject> mapToSubjectList(List<String> subjectNames) {
+		List<Subject> list = new ArrayList<>();
+		subjectNames.forEach(subName -> {
+			Subject s = new Subject();
+			s.setSubjectName(subName);
+			list.add(s);
+		});
+		return list;
+	}
 
 	private static String removeUpperCamelCaseAndExtraSpace(String str) {
 	    return str
