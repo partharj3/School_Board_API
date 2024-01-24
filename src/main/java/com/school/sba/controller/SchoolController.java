@@ -2,6 +2,7 @@ package com.school.sba.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,6 +21,7 @@ public class SchoolController {
 	@Autowired
 	private SchoolService schoolService;
 	
+	@PreAuthorize("hasAuthority('ADMIN')")
 	@PostMapping("/users/{userId}/schools")
 	public ResponseEntity<ResponseStructure<SchoolResponse>> addSchool(@RequestBody @Valid SchoolRequest school,@PathVariable int userId){
 		return schoolService.addSchool(school, userId);

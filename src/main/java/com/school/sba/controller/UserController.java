@@ -2,6 +2,7 @@ package com.school.sba.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,16 +34,27 @@ public class UserController {
 		return userService.findUser(userid);
 	}
 	
+	/**
+	 *  for multiple authorized people use:  
+	 * 	@PreAuthorize("hasAuthority('ROLE 1') OR hasAuthority('ROLE 2')")
+	 * 
+	 * @param userid
+	 * @return
+	 */
+	
+	@PreAuthorize("hasAuthority('ADMIN')")
 	@DeleteMapping("/users/{userid}")
 	public ResponseEntity<ResponseStructure<UserResponse>> deleteUserById(@PathVariable int userid){
 		return userService.deleteUser(userid);
 	}
 	
+	@PreAuthorize("hasAuthority('ADMIN')")
 	@PutMapping("/academic-programs/{programId}/users/{userId}")
 	public ResponseEntity<ResponseStructure<UserResponse>> setUserToAcademics(@PathVariable int userId, @PathVariable int programId){
 		return userService.setUserToAcademics(userId,programId);
 	}
 	
+	@PreAuthorize("hasAuthority('ADMIN')")
 	@PutMapping("/subjects/{subjectId}/users/{userId}")
 	public ResponseEntity<ResponseStructure<UserResponse>> addSubjectToTeacher(@PathVariable int userId, @PathVariable int subjectId){
 		return userService.addSubjectToTeacher(userId,subjectId);
