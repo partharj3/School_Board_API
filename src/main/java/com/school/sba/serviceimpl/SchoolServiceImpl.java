@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import com.school.sba.entity.School;
 import com.school.sba.enums.UserRole;
 import com.school.sba.exception.DataAlreadyExistsException;
-import com.school.sba.exception.UnauthorizedUserException;
+import com.school.sba.exception.UnauthorizedRoleException;
 import com.school.sba.exception.UserNotFoundByIdException;
 import com.school.sba.repository.SchoolRepo;
 import com.school.sba.repository.UserRepository;
@@ -49,9 +49,9 @@ public class SchoolServiceImpl implements SchoolService{
 	}
 	
 	@Override
-	public ResponseEntity<ResponseStructure<SchoolResponse>> addSchool(SchoolRequest request, int userId) {
+	public ResponseEntity<ResponseStructure<SchoolResponse>> addSchool(SchoolRequest request, int adminId) {
 		
-		return userRepo.findById(userId)
+		return userRepo.findById(adminId)
 				.map(user -> {
 					if(user.getUserRole().equals(UserRole.ADMIN)) {
 						if(user.getUserSchool()==null) {
@@ -69,7 +69,7 @@ public class SchoolServiceImpl implements SchoolService{
 							throw new DataAlreadyExistsException("Failed to CREATE a new School Data");
 					}
 					else
-						throw new UnauthorizedUserException("Failed to Create School !");
+						throw new UnauthorizedRoleException("Failed to Create School !");
 				})
 				.orElseThrow(()->new UserNotFoundByIdException("Failed to Create School !"));
 		

@@ -9,6 +9,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -52,19 +53,19 @@ public class ApplicationExceptionHandler extends ResponseEntityExceptionHandler 
 		return structure(HttpStatus.NOT_ACCEPTABLE,"Unable to save the data","Key or Email duplication is Prohibited");
 	}
 	
+	@ExceptionHandler(AdminAlreadyExistsException.class)
+	private ResponseEntity<Object> handleAdminAlreadyExistsException(AdminAlreadyExistsException exp){
+		return structure(HttpStatus.NOT_ACCEPTABLE,exp.getMessage(),"ADMIN Already Registered!!");
+	}
+	
 	@ExceptionHandler(UnauthorizedRoleException.class)
 	private ResponseEntity<Object> handleUnauthorizedUserRole(UnauthorizedRoleException exp){
-		return structure(HttpStatus.NOT_ACCEPTABLE,exp.getMessage(),"Unauthorized User Role. ADMIN already Exists");
+		return structure(HttpStatus.UNAUTHORIZED,exp.getMessage(),"Unauthorized User Role to Proceed");
 	}
 	
 	@ExceptionHandler(UserNotFoundByIdException.class)
 	private ResponseEntity<Object> handleUserNotFoundById(UserNotFoundByIdException exp){
 		return structure(HttpStatus.NOT_FOUND,exp.getMessage(),"User ID not exists");
-	}
-	
-	@ExceptionHandler(UnauthorizedUserException.class)
-	private ResponseEntity<Object> handleUnauthorizedUserException(UnauthorizedUserException exp){
-		return structure(HttpStatus.UNAUTHORIZED,exp.getMessage(),"Unauthorized User to Proceed");
 	}
 	
 	@ExceptionHandler(UserDataNotExistsException.class)
@@ -105,5 +106,10 @@ public class ApplicationExceptionHandler extends ResponseEntityExceptionHandler 
 	@ExceptionHandler(SubjectNotFoundByIdException.class)
 	private ResponseEntity<Object> handleSubjectNotFoundByIdException(SubjectNotFoundByIdException exp){
 		return structure(HttpStatus.NOT_FOUND,exp.getMessage(),"No Subject Exist by this ID");
+	}
+	
+	@ExceptionHandler(AccessDeniedException.class)
+	private ResponseEntity<Object> handleAccessDeniedException(AccessDeniedException exp){
+		return structure(HttpStatus.FORBIDDEN,exp.getMessage(),"NO Permission to ACCESS");
 	}
 }

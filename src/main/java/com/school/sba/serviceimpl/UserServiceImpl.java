@@ -1,5 +1,8 @@
 package com.school.sba.serviceimpl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +13,7 @@ import com.school.sba.entity.AcademicProgram;
 import com.school.sba.entity.User;
 import com.school.sba.enums.UserRole;
 import com.school.sba.exception.AcademicProgramNotExistsByIdException;
+import com.school.sba.exception.AdminAlreadyExistsException;
 import com.school.sba.exception.IllegalRequestException;
 import com.school.sba.exception.SubjectNotFoundByIdException;
 import com.school.sba.exception.UnauthorizedRoleException;
@@ -64,40 +68,49 @@ public class UserServiceImpl implements UserService{
 						   .build();
 	}
 	
+
 	@Override
-	public ResponseEntity<ResponseStructure<UserResponse>> addUser(UserRequest request) {
-		
-//		List<User> exist = userRepo.findUserByUserRole(request.getUserRole());
-//		if(exist.size()==0 && request.getUserRole()==UserRole.ADMIN || request.getUserRole()!=UserRole.ADMIN) {
-//			User user1 = mapToUser(request);
-//			user1.setIsDeleted(false);
-//			
-//			User user = userRepo.save(user1);
-//			
-//			structure.setStatusCode(HttpStatus.CREATED.value());
-//			structure.setMessage("User Created Successfully");
-//			structure.setData(mapToUserResponse(user));
-//			
-//			return new ResponseEntity<ResponseStructure<UserResponse>>(structure, HttpStatus.CREATED);
-//		}
-//		else
-//			throw new UnauthorizedRoleException("Cannot Proceed Further");
-		
+	public ResponseEntity<ResponseStructure<UserResponse>> addAdmin(UserRequest request) {
 		UserRole role = request.getUserRole();
-		if(role!=UserRole.ADMIN || role==UserRole.ADMIN && !userRepo.existsByUserRole(role) ) {
+		if(role.equals(UserRole.ADMIN)) {
+			if(!userRepo.existsByUserRole(role))  {
+				User user = mapToUser(request);
+				user.setIsDeleted(false);
+				
+				user = userRepo.save(user);
+				
+				structure.setStatusCode(HttpStatus.CREATED.value());
+				structure.setMessage("ADMIN registered Successfully");
+				structure.setData(mapToUserResponse(user));
+				
+				return new ResponseEntity<ResponseStructure<UserResponse>>(structure, HttpStatus.CREATED);
+			}
+			else
+				throw new AdminAlreadyExistsException("Failed to register ADMIN");
+		}
+		else {
+			throw new UnauthorizedRoleException("Failed to register ADMIN");
+		}
+	}
+
+	
+	@Override
+	public ResponseEntity<ResponseStructure<UserResponse>> addUser(UserRequest request) {		
+		UserRole role = request.getUserRole();
+		if(role!=UserRole.ADMIN) {
 			User user1 = mapToUser(request);
 			user1.setIsDeleted(false);
 			
 			User user = userRepo.save(user1);
 			
 			structure.setStatusCode(HttpStatus.CREATED.value());
-			structure.setMessage("User Created Successfully");
+			structure.setMessage(user.getUserRole()+" Created Successfully");
 			structure.setData(mapToUserResponse(user));
 			
 			return new ResponseEntity<ResponseStructure<UserResponse>>(structure, HttpStatus.CREATED);
 		}
 		else
-			throw new UnauthorizedRoleException("Cannot Proceed Further");
+			throw new IllegalRequestException("Failed to ADD the User");
 	}
 
 	@Override
@@ -184,4 +197,26 @@ public class UserServiceImpl implements UserService{
 				.orElseThrow(() -> new UserNotFoundByIdException("Failed to ADD Subject to user"));
 	}
 
+	@Override
+	public ResponseEntity<ResponseStructure<List<UserResponse>>> findAllUsers() {
+		List<User> list = userRepo.findAll();
+		List<UserResponse> responseList = new ArrayList<UserResponse>();
+		ResponseStructure<List<UserResponse>> structure = new ResponseStructure<>();
+		if(!list.isEmpty()) {
+			
+			for(User user : list) {
+				responseList.add(mapToUserResponse(user));
+			}
+			
+			structure.setStatusCode(HttpStatus.FOUND.value());
+			structure.setMessage("List of Users");
+		}
+		else {
+			structure.setStatusCode(HttpStatus.FOUND.value());
+			structure.setMessage("List is EMPTY");
+		}
+		structure.setData(responseList);
+		
+		return new ResponseEntity<ResponseStructure<List<UserResponse>>>(structure, HttpStatus.FOUND);
+	}
 }

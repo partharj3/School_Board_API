@@ -1,5 +1,7 @@
 package com.school.sba.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,7 +27,13 @@ public class UserController {
 	private UserService userService;
 	
 	@PostMapping("/users/register")
-	public ResponseEntity<ResponseStructure<UserResponse>> addUser(@RequestBody @Valid UserRequest request){
+	public ResponseEntity<ResponseStructure<UserResponse>> addAdmin(@RequestBody @Valid UserRequest request){
+		return userService.addAdmin(request);
+	}
+	
+	@PreAuthorize("hasAuthority('ADMIN')")
+	@PostMapping("/users")
+	public ResponseEntity<ResponseStructure<UserResponse>> addUserByAdmin(@RequestBody @Valid UserRequest request){
 		return userService.addUser(request);
 	}
 	
@@ -58,6 +66,12 @@ public class UserController {
 	@PutMapping("/subjects/{subjectId}/users/{userId}")
 	public ResponseEntity<ResponseStructure<UserResponse>> addSubjectToTeacher(@PathVariable int userId, @PathVariable int subjectId){
 		return userService.addSubjectToTeacher(userId,subjectId);
+	}
+	
+	@PreAuthorize("hasAuthority('ADMIN')")
+	@GetMapping("/users")
+	public ResponseEntity<ResponseStructure<List<UserResponse>>> findAllUsers(){
+		return userService.findAllUsers();
 	}
 	
 }

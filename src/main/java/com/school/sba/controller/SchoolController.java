@@ -22,9 +22,9 @@ public class SchoolController {
 	private SchoolService schoolService;
 	
 	@PreAuthorize("hasAuthority('ADMIN')")
-	@PostMapping("/users/{userId}/schools")
-	public ResponseEntity<ResponseStructure<SchoolResponse>> addSchool(@RequestBody @Valid SchoolRequest school,@PathVariable int userId){
-		return schoolService.addSchool(school, userId);
+	@PostMapping("/users/{adminId}/schools")
+	public ResponseEntity<ResponseStructure<SchoolResponse>> addSchool(@RequestBody @Valid SchoolRequest school,@PathVariable int adminId){
+		return schoolService.addSchool(school, adminId);
 	}
 	
 //	@PutMapping("/schools/{schoolId}")

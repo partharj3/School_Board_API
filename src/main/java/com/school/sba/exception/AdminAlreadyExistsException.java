@@ -6,7 +6,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@AllArgsConstructor
-public class UnauthorizedUserException extends RuntimeException {
+@AllArgsConstructor 
+public class AdminAlreadyExistsException extends RuntimeException {
 	private String message;
 }
