@@ -116,19 +116,19 @@ public class AcademicProgramServiceImpl implements AcademicProgramService{
 	public ResponseEntity<ResponseStructure<AcademicProgramResponse>> updateSubjectList(int programId, SubjectRequest request) {
 		return academicRepo.findById(programId)
 				.map(program ->{
-					List<Subject> existing = (program.getSubjectList()!=null ? program.getSubjectList() : new ArrayList<>());
+					List<Subject> existing = (program.getSubjectList()!=null) ? program.getSubjectList() : new ArrayList<>();
 					
 					request.getSubjectNames().forEach(subjectName -> {
 						boolean isPresent = false;
 						for(Subject subject : existing) {
 							isPresent = (subjectName.equalsIgnoreCase(subject.getSubjectName())) ? true : false;
-							if(isPresent)
-								break;
+							if(isPresent) {
+								break;}
 							}
 						if(!isPresent) {
 							existing.add(subjectrepo.findBySubjectName(subjectName)
-									.orElseGet(() -> 
-										subjectrepo.save(Subject.builder().subjectName(subjectName.toLowerCase()).build())));
+										.orElseGet(() -> 
+											subjectrepo.save(Subject.builder().subjectName(subjectName.toLowerCase()).build())));
 						}
 					});
 					

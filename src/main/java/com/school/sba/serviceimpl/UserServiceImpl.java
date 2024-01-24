@@ -1,12 +1,9 @@
 package com.school.sba.serviceimpl;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.school.sba.entity.AcademicProgram;
@@ -39,12 +36,15 @@ public class UserServiceImpl implements UserService{
 	private SubjectRepository subjectRepo;
 	
 	@Autowired
+	private PasswordEncoder passwordEncoder;
+	
+	@Autowired
 	private ResponseStructure<UserResponse> structure;
 	
 	private User mapToUser(UserRequest request) {
 		return User.builder()
 				   .username(request.getUsername())
-				   .password(request.getPassword())
+				   .password(passwordEncoder.encode(request.getPassword()))
 				   .firstname(request.getFirstname())
 				   .lastname(request.getLastname())
 				   .contactNo(request.getContactNo())

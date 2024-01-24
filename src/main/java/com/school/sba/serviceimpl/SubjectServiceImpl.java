@@ -64,18 +64,20 @@ public class SubjectServiceImpl implements SubjectService{
 		return academicsRepo.findById(programId)
 				.map(program -> {
 					List<Subject> subjects = new ArrayList<>();
-					request.getSubjectNames().forEach(name -> {
-						subjects.add(
-								subjectRepo.findBySubjectName(name).map(subject -> {
-								return subject;
-								})
-								.orElseGet(() -> {
-								Subject subject = new Subject();
-								subject.setSubjectName(name.toLowerCase());
-								subjectRepo.save(subject);
-								return subject;
-								})
-							);
+					List<String> sb = request.getSubjectNames();
+					sb.forEach(name -> {
+
+						Subject subj = subjectRepo.findBySubjectName(name).map(subject -> {
+										return subject;
+										})
+										.orElseGet(() -> {
+										Subject subject = new Subject();
+										subject.setSubjectName(name.toLowerCase());
+										subjectRepo.save(subject);
+										return subject;
+										});
+					
+						subjects.add(subj);
 					});
 					
 					program.setSubjectList(subjects);
