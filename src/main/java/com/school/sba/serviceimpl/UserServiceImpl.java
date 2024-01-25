@@ -6,6 +6,8 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +22,7 @@ import com.school.sba.exception.UnauthorizedRoleException;
 import com.school.sba.exception.UserDataNotExistsException;
 import com.school.sba.exception.UserNotFoundByIdException;
 import com.school.sba.repository.AcademicProgramRepository;
+import com.school.sba.repository.SchoolRepo;
 import com.school.sba.repository.SubjectRepository;
 import com.school.sba.repository.UserRepository;
 import com.school.sba.requestdto.UserRequest;
@@ -38,6 +41,9 @@ public class UserServiceImpl implements UserService{
 	
 	@Autowired
 	private SubjectRepository subjectRepo;
+	
+	@Autowired
+	private SchoolRepo schoolRepo;
 	
 	@Autowired
 	private PasswordEncoder passwordEncoder;
@@ -93,25 +99,30 @@ public class UserServiceImpl implements UserService{
 		}
 	}
 
-	
 	@Override
-	public ResponseEntity<ResponseStructure<UserResponse>> addUser(UserRequest request) {		
-		UserRole role = request.getUserRole();
-		if(role!=UserRole.ADMIN) {
-			User user1 = mapToUser(request);
-			user1.setIsDeleted(false);
-			
-			User user = userRepo.save(user1);
-			
-			structure.setStatusCode(HttpStatus.CREATED.value());
-			structure.setMessage(user.getUserRole()+" Created Successfully");
-			structure.setData(mapToUserResponse(user));
-			
-			return new ResponseEntity<ResponseStructure<UserResponse>>(structure, HttpStatus.CREATED);
+	public ResponseEntity<ResponseStructure<UserResponse>> addUser(UserRequest request) {
+		String admin = SecurityContextHolder.getContext().getAuthentication().getName();
+		return userRepo.findUserByUsername(admin).map(
+				userAdmin -> {
+					if(userAdmin.getUserSchool()!=null && !request.getUserRole().equals(UserRole.ADMIN)) {
+						User user = mapToUser(request);
+						user.setIsDeleted(false);
+						user.setUserSchool(userAdmin.getUserSchool());
+						schoolRepo.save(user.getUserSchool());
+						userRepo.save(user);
+						
+						structure.setStatusCode(HttpStatus.CREATED.value());
+						structure.setMessage(user.getUserRole()+" Created Successfully");
+						structure.setData(mapToUserResponse(user));
+						
+						return new ResponseEntity<ResponseStructure<UserResponse>>(structure, HttpStatus.CREATED);
+					}
+					else
+						throw new IllegalRequestException("Failed to ADD the User");
+					
+				}				
+			).orElseThrow(() -> new UsernameNotFoundException("Admin Not Found from the Session"));
 		}
-		else
-			throw new IllegalRequestException("Failed to ADD the User");
-	}
 
 	@Override
 	public ResponseEntity<ResponseStructure<UserResponse>> findUser(int userid) {
@@ -146,34 +157,79 @@ public class UserServiceImpl implements UserService{
 		return new ResponseEntity<ResponseStructure<UserResponse>>(structure, HttpStatus.OK);
 	}
 
+//	public ResponseEntity<ResponseStructure<UserResponse>> setUserToAcademicProgram(int academicProgramId, int userId) {
+//		User user = userRepo.findById(userId)
+//				.orElseThrow(() -> new UserNotFoundByIdException("User With Given Id Not Found"));
+//		
+//		AcademicProgram academicProgram = academicProgramRepo.findById(academicProgramId)
+//				.orElseThrow(() -> new AcademicProgramNotFoundByIdException("AcademicProgram With Given Id Not Found"));
+//			List<Subject> subjects=academicProgram.getSubjects();
+//		
+//		
+//		if (user.getUserRole().equals(UserRole.ADMIN)) {
+//			throw new AdminCannotBeAssignedToAcademicProgramException("admin cannot assign");
+	
+//		}else if(user.getUserRole().equals(UserRole.TEACHER) && subjects.contains(user.getSubject()) ) {
+//			user.getAcademicPrograms().add(academicProgram);
+//			userRepo.save(user);
+//			academicProgram.getUsers().add(user);
+//			academicProgramRepo.save(academicProgram);	
+//		}
+//		else {
+//			user.getAcademicPrograms().add(academicProgram);
+//			userRepo.save(user);
+//			academicProgram.getUsers().add(user);
+//			academicProgramRepo.save(academicProgram);	
+//		}
+//		responseStructure.setStatusCode(HttpStatus.OK.value());
+//		responseStructure.setMessage("updated successfully");
+//		responseStructure.setData(mapToUserResponse(user));
+//
+//		return new ResponseEntity<ResponseStructure<UserResponse>>(responseStructure, HttpStatus.OK);
+//	}
+	
 	@Override
 	public ResponseEntity<ResponseStructure<UserResponse>> setUserToAcademics(int userId, int programId) {
 		return userRepo.findById(userId)
-				.map(user -> {
-					AcademicProgram pro = null;
-					if(user.getUserRole().equals(UserRole.ADMIN))
-						throw new IllegalRequestException("Failed to SET user to THIS PROGRAM");
-					else{
-						pro = academicRepo.findById(programId)
-							.map(program -> {
-								user.getAcademicprograms().add(program);
-								userRepo.save(user);
-								program.getUsers().add(user);
-								program = academicRepo.save(program);
-								return program;
-								})
-							.orElseThrow(() -> new AcademicProgramNotExistsByIdException("Failed to SET user to THIS PROGRAM"));
+			.map(user -> {
+				AcademicProgram pro = null;
+				if(user.getUserRole().equals(UserRole.ADMIN))
+					throw new IllegalRequestException("Failed to SET user to THIS PROGRAM");
+				else{
+					pro = academicRepo.findById(programId)
+						.map(program -> {
+							
+							if(user.getUserRole().equals(UserRole.TEACHER)) {
+								
+								if(user.getSubject()==null){ 
+									throw new IllegalRequestException("Teacher should assigned to a SUBJECT");}
+								
+								if(program.getSubjectList()==null || program.getSubjectList().isEmpty()){ 
+									throw new IllegalRequestException("Program should assigned with SUBJECTS to Add TEACHER");}
+								
+								if(!program.getSubjectList().contains(user.getSubject())){
+									throw new IllegalRequestException("Irrelevant TEACHER to the Academic Program");
+								}
+							}
+							
+							user.getAcademicprograms().add(program);
+							userRepo.save(user);
+							program.getUsers().add(user);
+							program = academicRepo.save(program);
+							return program;
 						}
-					structure.setStatusCode(HttpStatus.OK.value());
-					structure.setMessage(user.getUserRole()+" assigned with the Program "+pro.getProgramName());
-					structure.setData(mapToUserResponse(user));
-					
-					return new ResponseEntity<ResponseStructure<UserResponse>>(structure, HttpStatus.OK); 
-				})
-				.orElseThrow(()-> new UserNotFoundByIdException("Failed to SET user to THIS PROGRAM"));
+						)
+						.orElseThrow(() -> new AcademicProgramNotExistsByIdException("Failed to SET user to THIS PROGRAM"));
+					}
+				structure.setStatusCode(HttpStatus.OK.value());
+				structure.setMessage(user.getUserRole()+" assigned with the Program "+pro.getProgramName());
+				structure.setData(mapToUserResponse(user));
+				
+				return new ResponseEntity<ResponseStructure<UserResponse>>(structure, HttpStatus.OK); 
+			})
+			.orElseThrow(()-> new UserNotFoundByIdException("Failed to SET user to THIS PROGRAM"));
 	}
 
-	
 	@Override
 	public ResponseEntity<ResponseStructure<UserResponse>> addSubjectToTeacher(int userId, int subjectId) {
 		return userRepo.findById(userId)
@@ -181,8 +237,12 @@ public class UserServiceImpl implements UserService{
 					if(user.getUserRole().equals(UserRole.TEACHER)) {
 						subjectRepo.findById(subjectId)
 						.map(subject -> {
-							user.setSubject(subject);
-							return userRepo.save(user);
+							if(user.getSubject()==null) {
+								user.setSubject(subject);
+								return userRepo.save(user);
+							}else {
+								throw new IllegalRequestException("TEACHER already engaged with the "+user.getSubject().getSubjectName()+" Subject");
+							}
 						})
 						.orElseThrow(() -> new SubjectNotFoundByIdException("Failed to ADD Subject to user"));
 					
@@ -207,14 +267,12 @@ public class UserServiceImpl implements UserService{
 			for(User user : list) {
 				responseList.add(mapToUserResponse(user));
 			}
-			
-			structure.setStatusCode(HttpStatus.FOUND.value());
 			structure.setMessage("List of Users");
 		}
 		else {
-			structure.setStatusCode(HttpStatus.FOUND.value());
 			structure.setMessage("List is EMPTY");
 		}
+		structure.setStatusCode(HttpStatus.FOUND.value());
 		structure.setData(responseList);
 		
 		return new ResponseEntity<ResponseStructure<List<UserResponse>>>(structure, HttpStatus.FOUND);

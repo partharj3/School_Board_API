@@ -10,5 +10,4 @@ public class SchoolBoardApiApplication {
 		SpringApplication.run(SchoolBoardApiApplication.class, args);
 		System.out.println("Let's get Started...");
 	}
-
 }
