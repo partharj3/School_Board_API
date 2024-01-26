@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.school.sba.requestdto.ClassHourRequest;
-import com.school.sba.responsedto.ClassHourResponse;
 import com.school.sba.service.ClassHourService;
 import com.school.sba.util.ResponseStructure;
 
@@ -25,5 +24,4 @@ public class ClassHourController {
 			generateClassHour(@PathVariable int programId, @RequestBody ClassHourRequest request){
 		return classhourService.generateClassHour(programId,request);
 	}
-	
 }
