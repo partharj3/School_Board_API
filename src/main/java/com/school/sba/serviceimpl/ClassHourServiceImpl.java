@@ -40,16 +40,16 @@ public class ClassHourServiceImpl implements ClassHourService{
 	@Autowired
 	private ResponseStructure<String> structure;
 	
-	private ClassHourResponse mapToClassHourResponse(ClassHour classhour) {
-		return ClassHourResponse.builder()
-								.classhourid(classhour.getClasshourId())
-								.beginsAt(classhour.getBeginsAt())
-								.endsAt(classhour.getEndsAt())
-								.roomNo(classhour.getRoomNo())
-								.status(classhour.getStatus())
-								.academics(classhour.getProgram().getProgramName())
-								.build();
-	}
+//	private ClassHourResponse mapToClassHourResponse(ClassHour classhour) {
+//		return ClassHourResponse.builder()
+//								.classhourid(classhour.getClasshourId())
+//								.beginsAt(classhour.getBeginsAt())
+//								.endsAt(classhour.getEndsAt())
+//								.roomNo(classhour.getRoomNo())
+//								.status(classhour.getStatus())
+//								.academics(classhour.getProgram().getProgramName())
+//								.build();
+//	}
 	
 	private LocalDateTime dateToDateTime(LocalDate date, LocalTime time){
 		return LocalDateTime.of(date,time);
@@ -111,7 +111,7 @@ public class ClassHourServiceImpl implements ClassHourService{
 					return new ResponseEntity<ResponseStructure<String>> (structure, HttpStatus.CREATED);
 					}
 					else
-						throw new IllegalRequestException("Classhour Generation running out of End :: "+program.getProgramName());
+						throw new IllegalRequestException("Classhours Already Generated for :: "+program.getProgramName()+" of ID: "+program.getProgramId());
 						
 				})
 				.orElseThrow(() -> new AcademicProgramNotExistsByIdException("Failed to GENERATE Class Hour"));
