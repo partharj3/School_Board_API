@@ -241,7 +241,8 @@ public class UserServiceImpl implements UserService{
 								user.setSubject(subject);
 								return userRepo.save(user);
 							}else {
-								throw new IllegalRequestException("TEACHER already engaged with the "+user.getSubject().getSubjectName()+" Subject");
+								throw new IllegalRequestException("TEACHER already engaged with the "
+							                                      +user.getSubject().getSubjectName()+" Subject");
 							}
 						})
 						.orElseThrow(() -> new SubjectNotFoundByIdException("Failed to ADD Subject to user"));

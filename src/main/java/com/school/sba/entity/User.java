@@ -54,8 +54,4 @@ public class User {
 	
 	@ManyToOne
 	private Subject subject; 
-	
-//	@ManyToOne
-//	private ClassHour classhour;
-	
 }
