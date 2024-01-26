@@ -66,25 +66,25 @@ public class ClassHourServiceImpl implements ClassHourService{
 					if(program.getClasshourList()==null || program.getClasshourList().isEmpty())
 					{
 						List<ClassHour> perDayClasshour = new ArrayList<ClassHour>();
-						
-						LocalDateTime lasthour = null;
 						LocalDate date = program.getBeginsAt();
 						
 						// for generating day
 						for(int day=1; day<=6; day++) { 
-							 
+							LocalTime currentTime = schedule.getOpensAt();
+							LocalDateTime lasthour = null;
+							
 							// for generating class hours per day
-							for(int nthClasshourOfTheDay=1; nthClasshourOfTheDay<=schedule.getClassHoursPerDay(); nthClasshourOfTheDay++) { 
+							for(int entry=1; entry<=schedule.getClassHoursPerDay(); entry++) { 
 								ClassHour classhour = new ClassHour();
 								
-								if(nthClasshourOfTheDay==1) { // first class hour of the day
-									classhour.setBeginsAt(dateToDateTime(date,schedule.getOpensAt()));
+								if(currentTime.equals(schedule.getOpensAt())) { // first class hour of the day
+									classhour.setBeginsAt(dateToDateTime(date,currentTime));
 								}
-							    else if(nthClasshourOfTheDay==3) {  // after break time
+							    else if(currentTime.equals(schedule.getBreakTime())) {  // after break time
 							    	lasthour = lasthour.plus(schedule.getBreakLengthInMinutes());
 									classhour.setBeginsAt(dateToDateTime(date, lasthour.toLocalTime()));
 								}
-								else if(nthClasshourOfTheDay==5) {  // after lunch time
+								else if(currentTime.equals(schedule.getLunchTime())) {  // after lunch time
 									lasthour = lasthour.plus(schedule.getLunchLengthInMinutes());
 									classhour.setBeginsAt(dateToDateTime(date, lasthour.toLocalTime()));
 								}
@@ -97,7 +97,13 @@ public class ClassHourServiceImpl implements ClassHourService{
 
 								perDayClasshour.add(classHourRepo.save(classhour));
 								
-								lasthour = perDayClasshour.get(nthClasshourOfTheDay-1).getEndsAt();
+								lasthour = perDayClasshour.get(entry-1).getEndsAt();
+
+								currentTime = lasthour.toLocalTime();
+								
+								if(currentTime.equals(schedule.getClosesAt())) // school closing time
+									break;
+								
 							}
 							date = date.plusDays(1);
 					}
@@ -116,60 +122,4 @@ public class ClassHourServiceImpl implements ClassHourService{
 				})
 				.orElseThrow(() -> new AcademicProgramNotExistsByIdException("Failed to GENERATE Class Hour"));
 	}
-						
-						
-				
-		/** OLDER
-		 * 
-					    if(program.getClasshourList().size() < schedule.getClassHoursPerDay()*6) {
-							List<ClassHour> perDayClassHour = (program.getClasshourList()!=null) 
-									                           ? program.getClasshourList()  
-									                           : new ArrayList<ClassHour>();
-									
-						ClassHour classhour = new ClassHour();
-						int nthClasshourOfTheDay = perDayClassHour.size()%schedule.getClassHoursPerDay();
-						
-						if(perDayClassHour.isEmpty() || nthClasshourOfTheDay == 0) {
-							classhour.setBeginsAt(LocalDateTime.of(program.getBeginsAt()
-									                              ,schedule.getOpensAt()));
-														
-						}else {
-							ClassHour lasthour = perDayClassHour.get(perDayClassHour.size()-1);
-							LocalDateTime temp=null;
-							if(nthClasshourOfTheDay==2) { // Class hour after Break time
-								temp = lasthour.getEndsAt().plus(schedule.getBreakLengthInMinutes());
-								classhour.setBeginsAt(temp);
-							}
-							else if(nthClasshourOfTheDay==4) { // Class hour after Lunch time
-								temp = lasthour.getEndsAt().plus(schedule.getLunchLengthInMinutes());
-								classhour.setBeginsAt(temp);
-							}
-							else {
-								classhour.setBeginsAt(lasthour.getEndsAt());
-							}
-						}
-						
-						classhour.setEndsAt(classhour.getBeginsAt().plus(schedule.getClassHoursLengthInMinutes()));	
-		
-						
-//						classhour.setRoomNo(request.getRoomNo());
-						classhour.setStatus(ClassStatus.NOTSCHEDULED);
-						classhour.setProgram(program);
-						classHourRepo.save(classhour);
-						
-						program.getClasshourList().add(classhour);
-						academicsRepo.save(program);
-						
-						structure.setStatusCode(HttpStatus.CREATED.value());
-						structure.setMessage("Classhour "+program.getClasshourList().size()+" GENERATED Successfully");
-						structure.setData(mapToClassHourResponse(classhour));
-						
-						return new ResponseEntity<ResponseStructure<ClassHourResponse>>(structure, HttpStatus.CREATED);
-					}
-					else
-						throw new IllegalRequestException("Classhour Generation running out of End :: "+program.getProgramName());
-				})
-				.orElseThrow(() -> new AcademicProgramNotExistsByIdException("Failed to GENERATE Class Hour"));
-	}
-	 **/
 }
