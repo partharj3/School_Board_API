@@ -12,15 +12,24 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import com.school.sba.entity.AcademicProgram;
 import com.school.sba.entity.ClassHour;
 import com.school.sba.entity.Schedule;
+import com.school.sba.entity.Subject;
+import com.school.sba.entity.User;
 import com.school.sba.enums.ClassStatus;
+import com.school.sba.enums.UserRole;
 import com.school.sba.exception.AcademicProgramNotExistsByIdException;
+import com.school.sba.exception.ClassHourNoExistsByIdException;
 import com.school.sba.exception.IllegalRequestException;
 import com.school.sba.exception.ScheduleNotExistsException;
+import com.school.sba.exception.SubjectNotFoundByIdException;
+import com.school.sba.exception.UserNotFoundByIdException;
 import com.school.sba.repository.AcademicProgramRepository;
 import com.school.sba.repository.ClassHourRepository;
 import com.school.sba.repository.ScheduleRepository;
+import com.school.sba.repository.SubjectRepository;
+import com.school.sba.repository.UserRepository;
 import com.school.sba.requestdto.ClassHourRequest;
 import com.school.sba.responsedto.ClassHourResponse;
 import com.school.sba.service.ClassHourService;
@@ -33,6 +42,12 @@ public class ClassHourServiceImpl implements ClassHourService{
 	private AcademicProgramRepository academicsRepo;
 	
 	@Autowired
+	private SubjectRepository subjectRepo;
+	
+	@Autowired
+	private UserRepository userRepo;
+	
+	@Autowired
 	private ScheduleRepository scheduleRepo;
 	
 	@Autowired
@@ -40,6 +55,20 @@ public class ClassHourServiceImpl implements ClassHourService{
 
 	@Autowired
 	private ResponseStructure<String> structure;
+	
+	private ClassHour mapToClasshour(ClassHourRequest request) {
+		User user = userRepo.findById(request.getUserId()).orElseThrow(null);
+		Subject subject = subjectRepo.findById(request.getSubjectId()).orElseThrow(null);
+		ClassHour ch = classHourRepo.findById(request.getClasshourId()).orElseThrow(null);
+
+		return ClassHour.builder()
+						.user(user)
+						.program(ch.getProgram())
+						.status(request.getStatus())
+						.subject(subject)
+						.roomNo(request.getRoomNo())
+						.build();
+	}
 	
 	private ClassHourResponse mapToClassHourResponse(ClassHour classhour) {
 		return ClassHourResponse.builder()
@@ -71,9 +100,8 @@ public class ClassHourServiceImpl implements ClassHourService{
 		return (lunchTime.isAfter(start) && lunchTime.isBefore(end) || lunchTime.equals(start));
 	}
 	
-	
 	@Override
-	public ResponseEntity<ResponseStructure<String>> generateClassHour(int programId,ClassHourRequest request) {
+	public ResponseEntity<ResponseStructure<String>> generateClassHour(int programId) {
 		return academicsRepo.findById(programId)
 				.map(program ->{
 					Schedule schedule = program.getAcademicSchool().getSchedule();
@@ -133,7 +161,8 @@ public class ClassHourServiceImpl implements ClassHourService{
 									break;
 								}
 								
-								perDayClasshour.add(classHourRepo.save(classhour));
+								ClassHour savedObject = classHourRepo.save(classhour);
+								perDayClasshour.add(savedObject);
 								
 								lasthour = perDayClasshour.get(entry-1).getEndsAt();
 								currentTime = lasthour.toLocalTime();
@@ -154,5 +183,94 @@ public class ClassHourServiceImpl implements ClassHourService{
 						
 				})
 				.orElseThrow(() -> new AcademicProgramNotExistsByIdException("Failed to GENERATE Class Hour"));
+	}
+	
+	/***
+	 * 
+	 * It takes the ClassHourRequest, during the progress if it fails
+	 * it will send the reason for rejection to the called method i.e, updateClasshours()	 
+	 *  
+	 * @param request
+	 * @param isValid
+	 * @return String result of Operation
+	 */
+	public String updateClasshour(ClassHourRequest request, List<ClassHour> isValid) {
+		return classHourRepo.findById(request.getClasshourId())
+			.map(classhour -> {
+				AcademicProgram program = classhour.getProgram();
+				List<Subject> subjectList = program.getSubjectList();
+				
+				if(subjectList.isEmpty()) 
+				   return  "ID:"+request.getClasshourId()+", UPDATION Failed ::: Program's Subject List is Empty";
+				
+				return subjectRepo.findById(request.getSubjectId())
+				.map(subject ->{
+					if(!subjectList.contains(subject)) return "ID:"+request.getClasshourId()+", UPDATION FAILED ::: Irrelevant Subject to this Program";
+					else {
+						return userRepo.findById(request.getUserId())
+						.map(user ->{
+						if(user.getUserRole().equals(UserRole.TEACHER)) {
+							
+							if(user.getSubject().getSubjectName().equals(subject.getSubjectName()) 
+							&& program.getUsers().contains(user)) {
+								
+								int roomNo = request.getRoomNo();
+								boolean isPresent = 
+									classHourRepo.existsByBeginsAtIsLessThanEqualAndEndsAtIsGreaterThanEqualAndRoomNo
+											      (classhour.getBeginsAt(), classhour.getEndsAt(), roomNo);
+								
+								if(!isPresent) {
+									classhour.setRoomNo(roomNo);
+									classhour.setSubject(subject);
+									classhour.setUser(user);
+									classhour.setStatus(request.getStatus());
+									isValid.add(classHourRepo.save(classhour));
+									return "CLASS HOUR "+classhour.getClasshourId()+" -> UPDATED with Room No.: "+roomNo+" Successfully !!!";
+								}
+								return "ID:"+request.getClasshourId()+", Classroom already engaged with another program";
+							}
+							return "ID:"+request.getClasshourId()+", UPDATION FAILED ::: Irrelevant TEACHER to this Program";
+						}
+						return "ID:"+request.getClasshourId()+", UPDATION FAILED ::: Only TEACHERS are ALLOWED";
+						})
+						.orElse("ID:"+request.getClasshourId()+", UPDATION Failed ::: Invalid User ID");
+					}
+				})
+				.orElse("ID:"+request.getClasshourId()+", UPDATION FAILED ::: Invalid Subject ID");
+			})
+			.orElse("ID:"+request.getClasshourId()+", UPDATION FAILED ::: NO CLASS HOUR FOUND");
+	}
+	
+	/** 
+	 *  To update the ClassHour from the list of ClassHourRequest. it returns the list of String 
+	 *  which tracks each request's result to give response to client.
+	 *  
+	 *  If the updation got failed, then it will return the reason.
+	 *  Each request will be getting the result individually by method
+	 *  **/
+	@Override
+	public ResponseEntity<ResponseStructure<List<String>>> updateClasshourList(List<ClassHourRequest> requestList){
+		if(!requestList.isEmpty()) {
+			ResponseStructure<List<String>> structure = new ResponseStructure<>();
+			List<String> responseList = new ArrayList<>(); 
+			List<ClassHour> isValid = new ArrayList<ClassHour>(); // ONLY VALID DATA
+			
+			for(ClassHourRequest request : requestList) {
+				responseList.add(updateClasshour(request, isValid));
+			}
+			
+			if(isValid.size() == requestList.size()) // ALL DATA VALIDATED
+				structure.setMessage("All requests have been SUCCESSFULLY UPDATED. !!!!");
+			else if(isValid.size() == 0) // NO VALID DATA
+				structure.setMessage("NO requests have been UPDATED. Check the RECORDS");
+			else 
+				structure.setMessage("Requests UPDATED Partially !!");
+			
+			structure.setStatusCode(HttpStatus.OK.value());
+			structure.setData(responseList);
+			
+			return new ResponseEntity<ResponseStructure<List<String>>> (structure , HttpStatus.OK);
+		}
+		throw new IllegalRequestException("List is EMPTY !!");
 	}
 }

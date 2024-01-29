@@ -1,7 +1,7 @@
 package com.school.sba.enums;
 
 public enum ClassStatus {
-	ONGOING,
+	ON_GOING,
 	COMPLETED,
 	CANCELLED,
 	NOT_SCHEDULED,

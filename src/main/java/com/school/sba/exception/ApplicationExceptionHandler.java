@@ -112,4 +112,9 @@ public class ApplicationExceptionHandler extends ResponseEntityExceptionHandler 
 	private ResponseEntity<Object> handleAccessDeniedException(AccessDeniedException exp){
 		return structure(HttpStatus.FORBIDDEN,exp.getMessage(),"NO Permission to ACCESS");
 	}
+	
+	@ExceptionHandler(ClassHourNoExistsByIdException.class)
+	private ResponseEntity<Object> handleClassHourNoExistsByIdException(ClassHourNoExistsByIdException exp){
+		return structure(HttpStatus.NOT_FOUND,exp.getMessage(),"No Classhour found by this ID");
+	}
 }

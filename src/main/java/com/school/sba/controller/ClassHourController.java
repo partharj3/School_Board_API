@@ -1,10 +1,13 @@
 package com.school.sba.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,8 +23,14 @@ public class ClassHourController {
 	
 	@PreAuthorize("hasAuthority('ADMIN')")
 	@PostMapping("/academic-program/{programId}/class-hours")
-	public ResponseEntity<ResponseStructure<String>> 
-			generateClassHour(@PathVariable int programId, @RequestBody ClassHourRequest request){
-		return classhourService.generateClassHour(programId,request);
+	public ResponseEntity<ResponseStructure<String>> generateClassHour(@PathVariable int programId){
+		return classhourService.generateClassHour(programId);
 	}
+	
+	@PreAuthorize("hasAuthority('ADMIN')")
+	@PutMapping("/class-hours")
+	public ResponseEntity<ResponseStructure<List<String>>> updateClasshourList(@RequestBody List<ClassHourRequest> request){
+		return classhourService.updateClasshourList(request);
+	}
+	
 }

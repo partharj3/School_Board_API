@@ -14,8 +14,10 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ClassHourRequest {
-//	private LocalDateTime beginsAt;
-//	private LocalDateTime endsAt;
+	
+	private int classhourId;
+	private int userId;
+	private int subjectId;
 	private int roomNo;
 	private ClassStatus status;
 }
