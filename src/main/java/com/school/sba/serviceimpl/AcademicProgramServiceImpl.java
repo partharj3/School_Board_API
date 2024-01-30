@@ -1,27 +1,29 @@
 package com.school.sba.serviceimpl;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.school.sba.entity.AcademicProgram;
 import com.school.sba.entity.Subject;
-import com.school.sba.enums.ProgramType;
+import com.school.sba.entity.User;
+import com.school.sba.enums.UserRole;
 import com.school.sba.exception.AcademicProgramNotExistsByIdException;
+import com.school.sba.exception.IllegalRequestException;
 import com.school.sba.exception.SchoolNotFoundByIdException;
+import com.school.sba.exception.UserDataNotExistsException;
 import com.school.sba.repository.AcademicProgramRepository;
 import com.school.sba.repository.SchoolRepo;
 import com.school.sba.repository.SubjectRepository;
+import com.school.sba.repository.UserRepository;
 import com.school.sba.requestdto.AcademicProgramRequest;
 import com.school.sba.requestdto.SubjectRequest;
 import com.school.sba.responsedto.AcademicProgramResponse;
+import com.school.sba.responsedto.UserResponse;
 import com.school.sba.service.AcademicProgramService;
 import com.school.sba.util.ResponseStructure;
 
@@ -38,7 +40,21 @@ public class AcademicProgramServiceImpl implements AcademicProgramService{
 	private SubjectRepository subjectrepo;
 	
 	@Autowired
+	private UserRepository userRepo;
+	
+	@Autowired
 	private ResponseStructure<AcademicProgramResponse> structure;
+	
+	private UserResponse mapToUserResponse(User user) {
+		return UserResponse.builder()
+				           .userId(user.getUserId())
+				           .username(user.getUsername())
+				           .firstname(user.getFirstname())
+						   .lastname(user.getLastname())
+						   .email(user.getEmail())
+						   .userRole(user.getUserRole())
+						   .build();
+	}
 	
 	private AcademicProgramResponse mapToAcademicProgramResponse(AcademicProgram academics) {
 		List<String> subjects = new ArrayList<>();
@@ -111,7 +127,6 @@ public class AcademicProgramServiceImpl implements AcademicProgramService{
 				.orElseThrow(()-> new SchoolNotFoundByIdException("Failed to FETCH All Academics"));
 	}
 
-
 	@Override
 	public ResponseEntity<ResponseStructure<AcademicProgramResponse>> updateSubjectList(int programId, SubjectRequest request) {
 		return academicRepo.findById(programId)
@@ -155,11 +170,13 @@ public class AcademicProgramServiceImpl implements AcademicProgramService{
 				    })
 				    .orElseThrow(() -> new AcademicProgramNotExistsByIdException("Failed to UPDATE Subject List to this Program ID"));		
 	}	
+
+
+	/*
+	 * private static String removeUpperCamelCaseAndExtraSpace(String str) { return
+	 * str .replaceAll("(\\p{Lu})", " $1") // removes camel casing
+	 * .replaceAll("\\s+", " ") // removes extra white spaces .trim().toLowerCase();
+	 * // removes leading, trailing white spaces }
+	 */
 	
-	private static String removeUpperCamelCaseAndExtraSpace(String str) {
-	    return str
-	    		.replaceAll("(\\p{Lu})", " $1") // removes camel casing
-	    		.replaceAll("\\s+", " ")        // removes extra white spaces
-	    		.trim().toLowerCase();          // removes leading, trailing white spaces
-	}
 }

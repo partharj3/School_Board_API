@@ -1,6 +1,7 @@
 package com.school.sba.serviceimpl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,7 +60,7 @@ public class UserServiceImpl implements UserService{
 				   .lastname(request.getLastname())
 				   .contactNo(request.getContactNo())
 				   .email(request.getEmail())
-				   .userRole(request.getUserRole())
+				   .userRole(UserRole.valueOf(request.getUserRole()))
 				   .build();
 	}
 	
@@ -77,9 +78,9 @@ public class UserServiceImpl implements UserService{
 
 	@Override
 	public ResponseEntity<ResponseStructure<UserResponse>> addAdmin(UserRequest request) {
-		UserRole role = request.getUserRole();
-		if(role.equals(UserRole.ADMIN)) {
-			if(!userRepo.existsByUserRole(role))  {
+		String role = request.getUserRole();
+		if(role.equals(UserRole.ADMIN.name())) {
+			if(!userRepo.existsByUserRole(UserRole.valueOf(role)))  {
 				User user = mapToUser(request);
 				user.setIsDeleted(false);
 				
@@ -104,7 +105,7 @@ public class UserServiceImpl implements UserService{
 		String admin = SecurityContextHolder.getContext().getAuthentication().getName();
 		return userRepo.findUserByUsername(admin).map(
 				userAdmin -> {
-					if(userAdmin.getUserSchool()!=null && !request.getUserRole().equals(UserRole.ADMIN)) {
+					if(userAdmin.getUserSchool()!=null && !request.getUserRole().equals(UserRole.ADMIN.name())) {
 						User user = mapToUser(request);
 						user.setIsDeleted(false);
 						user.setUserSchool(userAdmin.getUserSchool());
@@ -156,37 +157,6 @@ public class UserServiceImpl implements UserService{
 		
 		return new ResponseEntity<ResponseStructure<UserResponse>>(structure, HttpStatus.OK);
 	}
-
-//	public ResponseEntity<ResponseStructure<UserResponse>> setUserToAcademicProgram(int academicProgramId, int userId) {
-//		User user = userRepo.findById(userId)
-//				.orElseThrow(() -> new UserNotFoundByIdException("User With Given Id Not Found"));
-//		
-//		AcademicProgram academicProgram = academicProgramRepo.findById(academicProgramId)
-//				.orElseThrow(() -> new AcademicProgramNotFoundByIdException("AcademicProgram With Given Id Not Found"));
-//			List<Subject> subjects=academicProgram.getSubjects();
-//		
-//		
-//		if (user.getUserRole().equals(UserRole.ADMIN)) {
-//			throw new AdminCannotBeAssignedToAcademicProgramException("admin cannot assign");
-	
-//		}else if(user.getUserRole().equals(UserRole.TEACHER) && subjects.contains(user.getSubject()) ) {
-//			user.getAcademicPrograms().add(academicProgram);
-//			userRepo.save(user);
-//			academicProgram.getUsers().add(user);
-//			academicProgramRepo.save(academicProgram);	
-//		}
-//		else {
-//			user.getAcademicPrograms().add(academicProgram);
-//			userRepo.save(user);
-//			academicProgram.getUsers().add(user);
-//			academicProgramRepo.save(academicProgram);	
-//		}
-//		responseStructure.setStatusCode(HttpStatus.OK.value());
-//		responseStructure.setMessage("updated successfully");
-//		responseStructure.setData(mapToUserResponse(user));
-//
-//		return new ResponseEntity<ResponseStructure<UserResponse>>(responseStructure, HttpStatus.OK);
-//	}
 	
 	@Override
 	public ResponseEntity<ResponseStructure<UserResponse>> setUserToAcademics(int userId, int programId) {
@@ -198,6 +168,9 @@ public class UserServiceImpl implements UserService{
 				else{
 					pro = academicRepo.findById(programId)
 						.map(program -> {
+							List<User> userList = program.getUsers();
+							if(userList.contains(user))
+								throw new IllegalRequestException("User Record already present in this Program");
 							
 							if(user.getUserRole().equals(UserRole.TEACHER)) {
 								
@@ -278,4 +251,48 @@ public class UserServiceImpl implements UserService{
 		
 		return new ResponseEntity<ResponseStructure<List<UserResponse>>>(structure, HttpStatus.FOUND);
 	}
+
+	@Override
+	public ResponseEntity<ResponseStructure<List<UserResponse>>> fetchUsersByRole(int programId, String userRole) {
+		return academicRepo.findById(programId)
+				.map(program -> {
+					if(!Arrays.asList(UserRole.values()).contains(userRole)) throw new IllegalRequestException("NO SUCH ROLES BELONGS TO THIS PROGRAM");
+ 					
+					UserRole role = UserRole.valueOf(userRole.toUpperCase());
+					System.out.println(role);
+					
+					if(role.equals(UserRole.ADMIN))
+						throw new IllegalRequestException("NOT PERMITED TO FETCH ADMIN");
+					
+	/** STREAM **/
+//					List<User> userList = program.getUsers().stream().filter(user -> user.getUserRole().equals(role)).toList();
+					
+	/** REPOSITORY METHOD: **/
+					
+					List<User> userList= userRepo.findByUserRoleAndAcademicprograms_ProgramId(role, programId);
+	
+					if(!userList.isEmpty()) {
+						
+						ResponseStructure<List<UserResponse>> structure = new ResponseStructure<>();
+						
+						List<UserResponse> response = userList.stream().map(user->mapToUserResponse(user)).toList();
+						
+						/*for(User user : userList) {
+							if(user.getUserRole().equals(role)) {
+								response.add(mapToUserResponse(user));
+							}
+						}*/
+						structure.setStatusCode(HttpStatus.FOUND.value());
+						structure.setMessage("List of "+role+" belongs to Program "+program.getProgramId());
+						structure.setData(response);
+						
+						return new ResponseEntity<ResponseStructure<List<UserResponse>>>(structure, HttpStatus.FOUND);
+					}
+					else 
+						throw new UserDataNotExistsException("No users associated with the academic program "+programId+" with role "+role);
+					
+				})
+				.orElseThrow(() -> new AcademicProgramNotExistsByIdException("Failed to FETCH "+userRole+" List"));
+	}
+	
 }

@@ -8,8 +8,6 @@ import com.school.sba.requestdto.UserRequest;
 import com.school.sba.responsedto.UserResponse;
 import com.school.sba.util.ResponseStructure;
 
-import jakarta.validation.Valid;
-
 public interface UserService {
 
 	ResponseEntity<ResponseStructure<UserResponse>> addUser(UserRequest request);
@@ -25,5 +23,7 @@ public interface UserService {
 	ResponseEntity<ResponseStructure<UserResponse>> addAdmin(UserRequest request);
 
 	ResponseEntity<ResponseStructure<List<UserResponse>>> findAllUsers();
-	
+
+	ResponseEntity<ResponseStructure<List<UserResponse>>> fetchUsersByRole(int programId, String userRole);	
 }
+

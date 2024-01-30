@@ -117,4 +117,5 @@ public class ApplicationExceptionHandler extends ResponseEntityExceptionHandler 
 	private ResponseEntity<Object> handleClassHourNoExistsByIdException(ClassHourNoExistsByIdException exp){
 		return structure(HttpStatus.NOT_FOUND,exp.getMessage(),"No Classhour found by this ID");
 	}
+
 }

@@ -20,11 +20,8 @@ import com.school.sba.entity.User;
 import com.school.sba.enums.ClassStatus;
 import com.school.sba.enums.UserRole;
 import com.school.sba.exception.AcademicProgramNotExistsByIdException;
-import com.school.sba.exception.ClassHourNoExistsByIdException;
 import com.school.sba.exception.IllegalRequestException;
 import com.school.sba.exception.ScheduleNotExistsException;
-import com.school.sba.exception.SubjectNotFoundByIdException;
-import com.school.sba.exception.UserNotFoundByIdException;
 import com.school.sba.repository.AcademicProgramRepository;
 import com.school.sba.repository.ClassHourRepository;
 import com.school.sba.repository.ScheduleRepository;
@@ -248,6 +245,7 @@ public class ClassHourServiceImpl implements ClassHourService{
 	 *  If the updation got failed, then it will return the reason.
 	 *  Each request will be getting the result individually by method
 	 *  **/
+	
 	@Override
 	public ResponseEntity<ResponseStructure<List<String>>> updateClasshourList(List<ClassHourRequest> requestList){
 		if(!requestList.isEmpty()) {
@@ -261,9 +259,9 @@ public class ClassHourServiceImpl implements ClassHourService{
 			
 			if(isValid.size() == requestList.size()) // ALL DATA VALIDATED
 				structure.setMessage("All requests have been SUCCESSFULLY UPDATED. !!!!");
-			else if(isValid.size() == 0) // NO VALID DATA
+			else if(isValid.size() == 0)			 // NO VALID DATA
 				structure.setMessage("NO requests have been UPDATED. Check the RECORDS");
-			else 
+			else  									 // PARTIAL DATA GOT VALIDATED
 				structure.setMessage("Requests UPDATED Partially !!");
 			
 			structure.setStatusCode(HttpStatus.OK.value());

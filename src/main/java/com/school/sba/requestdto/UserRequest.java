@@ -51,8 +51,8 @@ public class UserRequest {
 	message = "invalid email--Should be in the extension of '@gmail.com' ")
 	private String email;
 	
-//	@NotBlank(message = "Please provide your Role")
-//	@NotNull(message = "Please provide your Role")
-//	@Pattern(regexp="^[A-Z]+$", message="Role should be in Upper Case")	
-	private UserRole userRole;
+	@NotBlank(message = "Please provide your Role")
+	@NotNull(message = "Please provide your Role")
+	@Pattern(regexp="^[A-Z]+$", message="Role should be in Upper Case")	
+	private String userRole;
 }

@@ -2,7 +2,10 @@ package com.school.sba.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import com.school.sba.entity.AcademicProgram;
-import com.school.sba.enums.UserRole;
 
 public interface AcademicProgramRepository extends JpaRepository<AcademicProgram, Integer>{
+	
+//	@Query("SELECT u FROM User u JOIN u.academicprograms ap WHERE u.userRole = :userRole AND ap.programId = :programId")
+//    List<User> findUsersByUserRoleAndAcademicProgram_ProgramId(@Param("userRole") UserRole userRole, @Param("programId") int programId);
+	
 }
