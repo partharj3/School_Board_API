@@ -11,12 +11,14 @@ import org.springframework.stereotype.Service;
 import com.school.sba.entity.AcademicProgram;
 import com.school.sba.entity.Subject;
 import com.school.sba.entity.User;
+import com.school.sba.enums.ProgramType;
 import com.school.sba.enums.UserRole;
 import com.school.sba.exception.AcademicProgramNotExistsByIdException;
 import com.school.sba.exception.IllegalRequestException;
 import com.school.sba.exception.SchoolNotFoundByIdException;
 import com.school.sba.exception.UserDataNotExistsException;
 import com.school.sba.repository.AcademicProgramRepository;
+import com.school.sba.repository.ClassHourRepository;
 import com.school.sba.repository.SchoolRepo;
 import com.school.sba.repository.SubjectRepository;
 import com.school.sba.repository.UserRepository;
@@ -41,6 +43,9 @@ public class AcademicProgramServiceImpl implements AcademicProgramService{
 	
 	@Autowired
 	private UserRepository userRepo;
+	
+	@Autowired
+	private ClassHourRepository classhourRepo;
 	
 	@Autowired
 	private ResponseStructure<AcademicProgramResponse> structure;
@@ -74,7 +79,7 @@ public class AcademicProgramServiceImpl implements AcademicProgramService{
 
 	private AcademicProgram mapToAcademiProgram(AcademicProgramRequest request) {
 		return AcademicProgram.builder()
-				.programType(request.getProgramType())
+				.programType(ProgramType.valueOf(request.getProgramType()))
 				.programName(request.getProgramName())
 				.beginsAt(request.getBeginsAt())
 				.endsAt(request.getEndsAt())
@@ -89,7 +94,7 @@ public class AcademicProgramServiceImpl implements AcademicProgramService{
 					academics.setAcademicSchool(school);
 					academicRepo.save(academics);
 					school.setSchoolId(schoolId);
-					school.setAcademicProgram(academicRepo.findAll());
+					school.setAcademicPrograms(academicRepo.findAll());
 					schoolrepo.save(school);
 					
 					structure.setStatusCode(HttpStatus.CREATED.value());
@@ -105,14 +110,17 @@ public class AcademicProgramServiceImpl implements AcademicProgramService{
 	public ResponseEntity<ResponseStructure<List<AcademicProgramResponse>>> findAllAcademicsPrograms(int schoolId) {
 		return schoolrepo.findById(schoolId)
 				.map(school -> {
-					List<AcademicProgram> list = school.getAcademicProgram();
+					if(school.isDeleted()) throw new IllegalRequestException("School Already Deleted");
+					
+					List<AcademicProgram> list = school.getAcademicPrograms();
 					
 					List<AcademicProgramResponse> responseList = new ArrayList<>();
 					
 					ResponseStructure<List<AcademicProgramResponse>> structure = new ResponseStructure<>();
 					if(!list.isEmpty()) {
 						for(AcademicProgram program : list) {
-							responseList.add(mapToAcademicProgramResponse(program));
+							if(!program.isDeleted())
+								responseList.add(mapToAcademicProgramResponse(program));
 						}
 						structure.setStatusCode(HttpStatus.FOUND.value());
 						structure.setMessage("Academic Program List found for the "+school.getSchoolName());
@@ -131,6 +139,9 @@ public class AcademicProgramServiceImpl implements AcademicProgramService{
 	public ResponseEntity<ResponseStructure<AcademicProgramResponse>> updateSubjectList(int programId, SubjectRequest request) {
 		return academicRepo.findById(programId)
 				.map(program ->{
+					
+					if(program.isDeleted()) throw new IllegalRequestException("Program Already Deleted");						
+					
 					List<Subject> existing = (program.getSubjectList()!=null) ? program.getSubjectList() : new ArrayList<>();
 					
 					request.getSubjectNames().forEach(subjectName -> {
@@ -169,9 +180,43 @@ public class AcademicProgramServiceImpl implements AcademicProgramService{
 				        return new ResponseEntity<>(structure, HttpStatus.OK);
 				    })
 				    .orElseThrow(() -> new AcademicProgramNotExistsByIdException("Failed to UPDATE Subject List to this Program ID"));		
+	}
+
+	
+	@Override
+	public ResponseEntity<ResponseStructure<String>> deleteAcademicProgram(int programId) {
+		return academicRepo.findById(programId)
+		    .map(program ->{
+		    	if(!program.isDeleted()) {
+		    		program.setDeleted(true);
+		    		academicRepo.save(program);
+		    		ResponseStructure<String> structure = new ResponseStructure<>();
+					
+					structure.setStatusCode(HttpStatus.OK.value());
+					structure.setMessage("Program: "+programId+" DELETED");
+					structure.setData("Deleted Successfully");
+				
+					return new ResponseEntity<ResponseStructure<String>>(structure, HttpStatus.OK);
+		    	}
+		    	else
+		    		throw new IllegalRequestException("Failed to DELETE Academic Program");
+		    })
+		    .orElseThrow(() -> new AcademicProgramNotExistsByIdException("Failed to DELETE Academic Program"));
 	}	
 
-
+	public void permanentlyDeleteAcademicPrograms() {
+		List<AcademicProgram> programs = academicRepo.findByIsDeletedTrue();
+		if(!programs.isEmpty()) {
+			programs.forEach(program ->{
+				classhourRepo.deleteAll(program.getClasshourList());
+			});
+			academicRepo.deleteAll(programs);
+			System.out.println("List of Programs DELETED");
+		}else
+			System.out.println("Nothing to DELETE :: AcademicProgram");
+		
+	}
+	
 	/*
 	 * private static String removeUpperCamelCaseAndExtraSpace(String str) { return
 	 * str .replaceAll("(\\p{Lu})", " $1") // removes camel casing

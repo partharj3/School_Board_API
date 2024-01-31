@@ -3,6 +3,7 @@ package com.school.sba.entity;
 import java.time.Duration;
 import java.time.LocalTime;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -33,6 +34,8 @@ public class Schedule {
 	private Duration breakLengthInMinutes;
 	private LocalTime lunchTime;
 	private Duration lunchLengthInMinutes;
+	
+	private boolean isDeleted = false;
 
 	@OneToOne(mappedBy = "schedule")
 	private School school;

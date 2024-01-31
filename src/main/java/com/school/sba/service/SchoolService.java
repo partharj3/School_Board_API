@@ -11,4 +11,8 @@ public interface SchoolService {
 //	public ResponseEntity<String> findSchoolById(int schoolId);
 //	public ResponseEntity<String> deleteSchool(int schoolId);
 	public ResponseEntity<ResponseStructure<SchoolResponse>> addSchool(SchoolRequest school,  int userid);
+
+	public ResponseEntity<ResponseStructure<String>> deleteSchool(int schoolId);
+	
+	void permanentlyDeleteSchool();
 }

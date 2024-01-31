@@ -8,6 +8,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -44,12 +45,12 @@ public class User {
     @Enumerated(EnumType.STRING)
 	private UserRole userRole;
 	
-	private Boolean isDeleted;
+	private boolean isDeleted = false;
 	
 	@ManyToOne
 	private School userSchool;
 	
-	@ManyToMany(mappedBy = "users")
+	@ManyToMany(mappedBy = "users", fetch = FetchType.EAGER)
 	private List<AcademicProgram> academicprograms;
 	
 	@ManyToOne

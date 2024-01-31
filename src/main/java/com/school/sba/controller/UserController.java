@@ -81,7 +81,7 @@ public class UserController {
 	}
 
 	@GetMapping("/academic-programs/{programId}/user-roles/{userRole}/users")
-	public ResponseEntity<ResponseStructure<List<UserResponse>>> fetchUsersByRole(@PathVariable int programId,@PathVariable String userRole){
+	public ResponseEntity<ResponseStructure<List<UserResponse>>> fetchUsersByRole(@PathVariable int programId,@PathVariable UserRole userRole){
 		return userService.fetchUsersByRole(programId, userRole);
 	}
 	

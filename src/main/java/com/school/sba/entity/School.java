@@ -2,7 +2,9 @@ package com.school.sba.entity;
 
 import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -30,14 +32,16 @@ public class School {
 	private String schoolEmail;
 	private String schoolAddress;
 	
-	@OneToOne
+	private boolean isDeleted = false;
+	
+	@OneToOne(cascade = CascadeType.ALL)
 	private Schedule schedule;
 
-	@OneToMany(mappedBy="userSchool")
-	private List<User> user;
+	@OneToMany(mappedBy="userSchool", fetch = FetchType.EAGER)
+	private List<User> users;
 	
-	@OneToMany(mappedBy = "academicSchool")
-	private List<AcademicProgram> academicProgram;
+	@OneToMany(mappedBy = "academicSchool", fetch = FetchType.EAGER)
+	private List<AcademicProgram> academicPrograms;
 	
 //	@OneToMany(mappedBy="school")
 //	private List<ClassRoom> classroom;

@@ -1,12 +1,12 @@
 package com.school.sba.serviceimpl;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,6 +23,7 @@ import com.school.sba.exception.UnauthorizedRoleException;
 import com.school.sba.exception.UserDataNotExistsException;
 import com.school.sba.exception.UserNotFoundByIdException;
 import com.school.sba.repository.AcademicProgramRepository;
+import com.school.sba.repository.ClassHourRepository;
 import com.school.sba.repository.SchoolRepo;
 import com.school.sba.repository.SubjectRepository;
 import com.school.sba.repository.UserRepository;
@@ -48,6 +49,9 @@ public class UserServiceImpl implements UserService{
 	
 	@Autowired
 	private PasswordEncoder passwordEncoder;
+	
+	@Autowired
+	private ClassHourRepository classhourRepo;
 	
 	@Autowired
 	private ResponseStructure<UserResponse> structure;
@@ -82,8 +86,6 @@ public class UserServiceImpl implements UserService{
 		if(role.equals(UserRole.ADMIN.name())) {
 			if(!userRepo.existsByUserRole(UserRole.valueOf(role)))  {
 				User user = mapToUser(request);
-				user.setIsDeleted(false);
-				
 				user = userRepo.save(user);
 				
 				structure.setStatusCode(HttpStatus.CREATED.value());
@@ -107,7 +109,6 @@ public class UserServiceImpl implements UserService{
 				userAdmin -> {
 					if(userAdmin.getUserSchool()!=null && !request.getUserRole().equals(UserRole.ADMIN.name())) {
 						User user = mapToUser(request);
-						user.setIsDeleted(false);
 						user.setUserSchool(userAdmin.getUserSchool());
 						schoolRepo.save(user.getUserSchool());
 						userRepo.save(user);
@@ -130,8 +131,7 @@ public class UserServiceImpl implements UserService{
 		User user = userRepo.findById(userid).orElseThrow(()-> new UserNotFoundByIdException("Failed to FETCH the user"));
 		
 		// Logic to check is that already deleted or not
-		boolean deleted = user.getIsDeleted();
-		if(!deleted) {
+		if(!user.isDeleted()) {
 			structure.setStatusCode(HttpStatus.FOUND.value());
 			structure.setMessage("User Data Found");
 			structure.setData(mapToUserResponse(user));
@@ -144,8 +144,8 @@ public class UserServiceImpl implements UserService{
 	@Override
 	public ResponseEntity<ResponseStructure<UserResponse>> deleteUser(int userid) {
 		User user = userRepo.findById(userid).orElseThrow(()-> new UserNotFoundByIdException("Failed to DELETE the user"));
-		if(!user.getIsDeleted()) {
-			user.setIsDeleted(true);
+		if(!user.isDeleted() && !user.getUserRole().equals(UserRole.ADMIN)) {
+			user.setDeleted(true);
 			userRepo.save(user);
 			
 			structure.setStatusCode(HttpStatus.OK.value());
@@ -162,12 +162,18 @@ public class UserServiceImpl implements UserService{
 	public ResponseEntity<ResponseStructure<UserResponse>> setUserToAcademics(int userId, int programId) {
 		return userRepo.findById(userId)
 			.map(user -> {
+				
+				if(user.isDeleted()) throw new IllegalRequestException("User Already Deleted");
+				
 				AcademicProgram pro = null;
 				if(user.getUserRole().equals(UserRole.ADMIN))
 					throw new IllegalRequestException("Failed to SET user to THIS PROGRAM");
 				else{
 					pro = academicRepo.findById(programId)
 						.map(program -> {
+							
+							if(program.isDeleted()) throw new IllegalRequestException("Program Already Deleted");
+							
 							List<User> userList = program.getUsers();
 							if(userList.contains(user))
 								throw new IllegalRequestException("User Record already present in this Program");
@@ -207,6 +213,7 @@ public class UserServiceImpl implements UserService{
 	public ResponseEntity<ResponseStructure<UserResponse>> addSubjectToTeacher(int userId, int subjectId) {
 		return userRepo.findById(userId)
 				.map( user -> {
+					if(user.isDeleted()) throw new IllegalRequestException("User Already Deleted");
 					if(user.getUserRole().equals(UserRole.TEACHER)) {
 						subjectRepo.findById(subjectId)
 						.map(subject -> {
@@ -239,7 +246,8 @@ public class UserServiceImpl implements UserService{
 		if(!list.isEmpty()) {
 			
 			for(User user : list) {
-				responseList.add(mapToUserResponse(user));
+				if(!user.isDeleted())
+					responseList.add(mapToUserResponse(user));
 			}
 			structure.setMessage("List of Users");
 		}
@@ -253,15 +261,13 @@ public class UserServiceImpl implements UserService{
 	}
 
 	@Override
-	public ResponseEntity<ResponseStructure<List<UserResponse>>> fetchUsersByRole(int programId, String userRole) {
+	public ResponseEntity<ResponseStructure<List<UserResponse>>> fetchUsersByRole(int programId, UserRole userRole) {
 		return academicRepo.findById(programId)
 				.map(program -> {
-					if(!Arrays.asList(UserRole.values()).contains(userRole)) throw new IllegalRequestException("NO SUCH ROLES BELONGS TO THIS PROGRAM");
- 					
-					UserRole role = UserRole.valueOf(userRole.toUpperCase());
-					System.out.println(role);
 					
-					if(role.equals(UserRole.ADMIN))
+					if(program.isDeleted()) throw new IllegalRequestException("Program Already Deleted");
+					
+					if(userRole.equals(UserRole.ADMIN))
 						throw new IllegalRequestException("NOT PERMITED TO FETCH ADMIN");
 					
 	/** STREAM **/
@@ -269,13 +275,16 @@ public class UserServiceImpl implements UserService{
 					
 	/** REPOSITORY METHOD: **/
 					
-					List<User> userList= userRepo.findByUserRoleAndAcademicprograms_ProgramId(role, programId);
+					List<User> userList= userRepo.findByUserRoleAndAcademicprograms_ProgramId(userRole, programId);
 	
 					if(!userList.isEmpty()) {
 						
 						ResponseStructure<List<UserResponse>> structure = new ResponseStructure<>();
 						
-						List<UserResponse> response = userList.stream().map(user->mapToUserResponse(user)).toList();
+						List<UserResponse> response = userList.stream()
+								                              .filter(user -> !user.isDeleted()) // Non deleted Users
+								                              .map(user->mapToUserResponse(user))
+								                              .toList();
 						
 						/*for(User user : userList) {
 							if(user.getUserRole().equals(role)) {
@@ -283,16 +292,72 @@ public class UserServiceImpl implements UserService{
 							}
 						}*/
 						structure.setStatusCode(HttpStatus.FOUND.value());
-						structure.setMessage("List of "+role+" belongs to Program "+program.getProgramId());
+						structure.setMessage("List of "+userRole+" belongs to Program "+program.getProgramId());
 						structure.setData(response);
 						
 						return new ResponseEntity<ResponseStructure<List<UserResponse>>>(structure, HttpStatus.FOUND);
 					}
 					else 
-						throw new UserDataNotExistsException("No users associated with the academic program "+programId+" with role "+role);
+						throw new UserDataNotExistsException("No users associated with the academic program "+programId+" with role "+userRole);
 					
 				})
 				.orElseThrow(() -> new AcademicProgramNotExistsByIdException("Failed to FETCH "+userRole+" List"));
 	}
+	
+	public void permanentlyDeleteUsers() {
+		List<User> usersToBeDeleted = userRepo.findByIsDeletedTrue();
+		if(!usersToBeDeleted.isEmpty()) {
+			usersToBeDeleted.forEach( user -> {
+				
+				// User's Academic becomes NULL
+				user.getAcademicprograms()
+					.forEach( program -> {
+					
+						// Teacher's classhour becomes NULL
+						program.getClasshourList().forEach(classhour ->{
+							if(classhour.getUser()==user) {
+								classhour.setUser(null);
+								classhourRepo.save(classhour);
+							}
+						});
+						
+						int index = program.getUsers().indexOf(user);
+						program.getUsers().set(index, null);
+						
+						academicRepo.save(program);
+					});
+//				Updated & Deleted			
+				userRepo.delete(userRepo.save(user));
+			});
+			System.out.println("Users DATA Cleared Permanently");
+		}else
+			System.out.println("Nothing to DELETE :: User");
+		
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 }

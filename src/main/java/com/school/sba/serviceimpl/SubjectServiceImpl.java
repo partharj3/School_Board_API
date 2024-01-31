@@ -12,6 +12,7 @@ import com.school.sba.entity.AcademicProgram;
 import com.school.sba.entity.Subject;
 import com.school.sba.exception.AcademicProgramNotExistsByIdException;
 import com.school.sba.exception.EmptyListException;
+import com.school.sba.exception.IllegalRequestException;
 import com.school.sba.repository.AcademicProgramRepository;
 import com.school.sba.repository.SubjectRepository;
 import com.school.sba.requestdto.SubjectRequest;
@@ -63,6 +64,9 @@ public class SubjectServiceImpl implements SubjectService{
 		
 		return academicsRepo.findById(programId)
 				.map(program -> {
+					
+					if(program.isDeleted()) throw new IllegalRequestException("Program Already Deleted");
+					
 					List<Subject> subjects = new ArrayList<>();
 					List<String> sb = request.getSubjectNames();
 					sb.forEach(name -> {

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.school.sba.entity.Schedule;
 import com.school.sba.exception.DataAlreadyExistsException;
+import com.school.sba.exception.IllegalRequestException;
 import com.school.sba.exception.ScheduleNotExistsException;
 import com.school.sba.exception.SchoolNotFoundByIdException;
 import com.school.sba.repository.ScheduleRepository;
@@ -86,8 +87,11 @@ public class ScheduleServiceImpl implements ScheduleService{
 	public ResponseEntity<ResponseStructure<ScheduleResponse>> findSchedule(int schoolId) {
 		return schoolrepo.findById(schoolId)
 				.map(school ->{
+					
+					if(!school.isDeleted()) throw new IllegalRequestException("School is ALREADY Deleted");
+					
 					Schedule schedule = school.getSchedule(); 
-					if(schedule != null) {
+					if(schedule != null && !schedule.isDeleted()) {
 						structure.setStatusCode(HttpStatus.FOUND.value());
 						structure.setMessage(school.getSchoolName()+" Schedule Found");
 						structure.setData(mapToScheduleResponse(schedule));
@@ -100,11 +104,13 @@ public class ScheduleServiceImpl implements ScheduleService{
 				.orElseThrow(()-> new SchoolNotFoundByIdException("Failed to FIND the Schedule"));	
 	}
 
-	
 	@Override
 	public ResponseEntity<ResponseStructure<ScheduleResponse>> updateSchedule(int scheduleId, ScheduleRequest request) {
 		return schedulerepo.findById(scheduleId)
 				.map(schedule ->{
+					
+					if(schedule.isDeleted()) throw new IllegalRequestException("Schedule is Already DELETED");
+					
 					Schedule updated = mapToSchedule(request);
 					updated.setScheduleId(schedule.getScheduleId());
 					updated.setSchool(schedule.getSchool());
@@ -119,25 +125,9 @@ public class ScheduleServiceImpl implements ScheduleService{
 				.orElseThrow(()->new ScheduleNotExistsException("Failed to UPDATE the Schedule"));
 	}
 
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+	public boolean isScheduleDeleted(Schedule schedule) {
+		schedule.setSchool(null);
+		schedulerepo.delete(schedule);
+		return true;
+	}
 }

@@ -1,15 +1,22 @@
 package com.school.sba.serviceimpl;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import com.school.sba.entity.Schedule;
 import com.school.sba.entity.School;
 import com.school.sba.enums.UserRole;
 import com.school.sba.exception.DataAlreadyExistsException;
+import com.school.sba.exception.IllegalRequestException;
+import com.school.sba.exception.SchoolNotFoundByIdException;
 import com.school.sba.exception.UnauthorizedRoleException;
 import com.school.sba.exception.UserNotFoundByIdException;
+import com.school.sba.repository.AcademicProgramRepository;
+import com.school.sba.repository.ScheduleRepository;
 import com.school.sba.repository.SchoolRepo;
 import com.school.sba.repository.UserRepository;
 import com.school.sba.requestdto.SchoolRequest;
@@ -25,6 +32,12 @@ public class SchoolServiceImpl implements SchoolService{
 	
 	@Autowired
 	private UserRepository userRepo;
+	
+	@Autowired
+	private AcademicProgramRepository academicsRepo;
+	
+	@Autowired
+	private ScheduleRepository scheduleRepo;
 	
 	@Autowired
 	private ResponseStructure<SchoolResponse> structure;
@@ -72,78 +85,59 @@ public class SchoolServiceImpl implements SchoolService{
 						throw new UnauthorizedRoleException("Failed to Create School !");
 				})
 				.orElseThrow(()->new UserNotFoundByIdException("Failed to Create School !"));
-		
-//		User user = userRepo.findById(userId).orElseThrow(()->new UserNotFoundByIdException("Failed to Create School !"));
-//		if(user.getUserRole()==UserRole.ADMIN) {
-//			if(schoolrepo.count()!=0)
-//					throw new DataAlreadyExistsException("Failed to CREATE a new School Data");
-//			
-//			School saved = schoolrepo.save(mapToSchool(request));
-//			
-//			structure.setStatusCode(HttpStatus.CREATED.value());
-//			structure.setMessage("School Created Successfully By the ADMIN");
-//			structure.setData(mapToSchoolResponse(saved));
-//			
-//			return new ResponseEntity<ResponseStructure<SchoolResponse>>(structure,HttpStatus.CREATED);
-//		}
-//		else
-//			throw new UnauthorizedUserException("Failed to Create School !");
 	}
 
 	
+	@Override
+	public ResponseEntity<ResponseStructure<String>> deleteSchool(int schoolId) {
+		return schoolrepo.findById(schoolId)
+				.map(school ->{
+					if(!school.isDeleted()) {
+						school.setDeleted(true);
+						schoolrepo.save(school);
+					
+						ResponseStructure<String> structure = new ResponseStructure<>();
+						
+						structure.setStatusCode(HttpStatus.OK.value());
+						structure.setMessage("School: "+schoolId+" DELETED");
+						structure.setData("Deleted Successfully");
+					
+						return new ResponseEntity<ResponseStructure<String>>(structure, HttpStatus.OK);
+					}
+					else 
+						throw new IllegalRequestException("Failed to DELETE School");
+				})
+				.orElseThrow(() -> new SchoolNotFoundByIdException("Failed to DELETE School"));
+	}
+
 	
+	@Override
+	public void permanentlyDeleteSchool() {
+	    List<School> schools = schoolrepo.findByIsDeletedTrue();
+	    if (!schools.isEmpty()) {
+	        schools.forEach(school -> {
+	        	
+	            academicsRepo.deleteAll(school.getAcademicPrograms());
+	            userRepo.deleteAll(userRepo.findByUserRoleNotAndUserSchool(UserRole.ADMIN, school));
+	            
+	            // Admin's Foreign key relation with the school has to be removed !
+	            userRepo.findUserByUserRole(UserRole.ADMIN).forEach(user -> {
+	            	if(user.getUserSchool().getSchoolId()==school.getSchoolId()) {
+	            		user.setUserSchool(null);
+	            		userRepo.save(user);
+	            	}
+	            });
+	        });
+	        
+            schoolrepo.deleteAll();
+
+            System.out.println("School Deleted Permanently");
+	    } else {
+	        System.out.println("Nothing to DELETE :: School");
+	    }
+	}
+
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-//	@Override
-//	public ResponseEntity<ResponseStructure<SchoolResponse>> addSchool(SchoolRequest schoolreq) {
-//
-//		School school = new School();
-//		school.setSchoolName(schoolreq.getSchoolName());
-//		school.setSchoolEmail(schoolreq.getSchoolEmail());
-//		school.setSchoolContact(schoolreq.getSchoolContact());
-//		school.setSchoolAddress(schoolreq.getSchoolAddress());
-//		
-//		schoolrepo.save(school);
-//		
-//		SchoolResponse response = new SchoolResponse();
-//		response.setSchoolName(school.getSchoolName());
-//		response.setSchoolContact(school.getSchoolContact());
-//		response.setSchoolAddress(school.getSchoolAddress());
-//		
-//		ResponseStructure<SchoolResponse> structure = new ResponseStructure<>();
-//		structure.setStatusCode(HttpStatus.CREATED.value());
-//		structure.setMessage("Data inserted Successfully");
-//		structure.setData(response);
-//		
-//		return new ResponseEntity<ResponseStructure<SchoolResponse>>(structure,HttpStatus.CREATED);
-//	}
 
 //	@Override
 //	public ResponseEntity<String> updateSchoolById(School school, int schoolId) {
@@ -172,18 +166,6 @@ public class SchoolServiceImpl implements SchoolService{
 //		}
 //		else
 //			throw new SchoolNotFoundById("No School found for ID: "+schoolId);
-//	}
-//
-//	@Override
-//	public ResponseEntity<String> deleteSchool(int schoolId) {
-//		Optional<School> obj = schoolrepo.findById(schoolId);
-//		if(obj.isPresent()) {
-//			School present = obj.get();
-//			schoolrepo.delete(present);
-//			return new ResponseEntity<String>("School Record DELETED Successfully",HttpStatus.OK);
-//		}
-//		else
-//			throw new SchoolNotFoundById("No School found by this ID to DELETE");
 //	}
 
 }

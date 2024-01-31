@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 
+import com.school.sba.enums.UserRole;
 import com.school.sba.requestdto.UserRequest;
 import com.school.sba.responsedto.UserResponse;
 import com.school.sba.util.ResponseStructure;
@@ -24,6 +25,8 @@ public interface UserService {
 
 	ResponseEntity<ResponseStructure<List<UserResponse>>> findAllUsers();
 
-	ResponseEntity<ResponseStructure<List<UserResponse>>> fetchUsersByRole(int programId, String userRole);	
+	ResponseEntity<ResponseStructure<List<UserResponse>>> fetchUsersByRole(int programId, UserRole userRole);	
+	
+	void permanentlyDeleteUsers();
 }
 

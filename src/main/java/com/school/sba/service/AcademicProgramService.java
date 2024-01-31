@@ -18,4 +18,9 @@ public interface AcademicProgramService {
 	ResponseEntity<ResponseStructure<List<AcademicProgramResponse>>> findAllAcademicsPrograms(int schoolId);
 
 	ResponseEntity<ResponseStructure<AcademicProgramResponse>> updateSubjectList(int programId, SubjectRequest request);
+
+	ResponseEntity<ResponseStructure<String>> deleteAcademicProgram(int programId);
+	
+	void permanentlyDeleteAcademicPrograms();
 }
+

@@ -31,6 +31,7 @@ public class ClassHour {
 	private LocalDateTime beginsAt;
 	private LocalDateTime endsAt;
 	private int roomNo;
+	private boolean isDeleted = false;
 	
 	@Enumerated(EnumType.STRING)
 	private ClassStatus status;

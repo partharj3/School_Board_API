@@ -3,6 +3,7 @@ package com.school.sba.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,6 +26,11 @@ public class SchoolController {
 	@PostMapping("/users/{adminId}/schools")
 	public ResponseEntity<ResponseStructure<SchoolResponse>> addSchool(@RequestBody @Valid SchoolRequest school,@PathVariable int adminId){
 		return schoolService.addSchool(school, adminId);
+	}
+	
+	@DeleteMapping("/schools/{schoolId}")
+	public ResponseEntity<ResponseStructure<String>> deleteSchool(@PathVariable int schoolId){
+		return schoolService.deleteSchool(schoolId);
 	}
 	
 //	@PutMapping("/schools/{schoolId}")

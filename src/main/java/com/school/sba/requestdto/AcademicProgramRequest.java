@@ -17,7 +17,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class AcademicProgramRequest {
 
-	private ProgramType programType;
+	private String programType;
 	private String programName;
 	private LocalDate beginsAt;
 	private LocalDate endsAt;

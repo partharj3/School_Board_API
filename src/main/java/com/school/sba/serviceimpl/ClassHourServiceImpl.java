@@ -61,7 +61,7 @@ public class ClassHourServiceImpl implements ClassHourService{
 		return ClassHour.builder()
 						.user(user)
 						.program(ch.getProgram())
-						.status(request.getStatus())
+						.status(ClassStatus.valueOf(request.getStatus()))
 						.subject(subject)
 						.roomNo(request.getRoomNo())
 						.build();
@@ -194,7 +194,9 @@ public class ClassHourServiceImpl implements ClassHourService{
 	public String updateClasshour(ClassHourRequest request, List<ClassHour> isValid) {
 		return classHourRepo.findById(request.getClasshourId())
 			.map(classhour -> {
+			
 				AcademicProgram program = classhour.getProgram();
+				if(program.isDeleted()) throw new IllegalRequestException("Program Already Deleted");
 				List<Subject> subjectList = program.getSubjectList();
 				
 				if(subjectList.isEmpty()) 
@@ -206,6 +208,9 @@ public class ClassHourServiceImpl implements ClassHourService{
 					else {
 						return userRepo.findById(request.getUserId())
 						.map(user ->{
+							
+							if(user.isDeleted()) throw new IllegalRequestException("User Already Deleted");
+							
 						if(user.getUserRole().equals(UserRole.TEACHER)) {
 							
 							if(user.getSubject().getSubjectName().equals(subject.getSubjectName()) 
@@ -220,7 +225,7 @@ public class ClassHourServiceImpl implements ClassHourService{
 									classhour.setRoomNo(roomNo);
 									classhour.setSubject(subject);
 									classhour.setUser(user);
-									classhour.setStatus(request.getStatus());
+									classhour.setStatus(ClassStatus.valueOf(request.getStatus()));
 									isValid.add(classHourRepo.save(classhour));
 									return "CLASS HOUR "+classhour.getClasshourId()+" -> UPDATED with Room No.: "+roomNo+" Successfully !!!";
 								}
@@ -271,4 +276,13 @@ public class ClassHourServiceImpl implements ClassHourService{
 		}
 		throw new IllegalRequestException("List is EMPTY !!");
 	}
+
+	public boolean isClassHoursDeleted(List<ClassHour> classhours) {
+		for(ClassHour classhour : classhours) {
+			classhour.setProgram(null);
+			classHourRepo.delete(classHourRepo.save(classhour));
+		}
+		return true;
+	}
+	
 }
