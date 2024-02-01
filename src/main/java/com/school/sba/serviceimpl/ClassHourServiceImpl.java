@@ -1,5 +1,6 @@
 package com.school.sba.serviceimpl;
 
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -24,7 +25,6 @@ import com.school.sba.exception.IllegalRequestException;
 import com.school.sba.exception.ScheduleNotExistsException;
 import com.school.sba.repository.AcademicProgramRepository;
 import com.school.sba.repository.ClassHourRepository;
-import com.school.sba.repository.ScheduleRepository;
 import com.school.sba.repository.SubjectRepository;
 import com.school.sba.repository.UserRepository;
 import com.school.sba.requestdto.ClassHourRequest;
@@ -45,13 +45,22 @@ public class ClassHourServiceImpl implements ClassHourService{
 	private UserRepository userRepo;
 	
 	@Autowired
-	private ScheduleRepository scheduleRepo;
-	
-	@Autowired
 	private ClassHourRepository classHourRepo;	
 
 	@Autowired
 	private ResponseStructure<String> structure;
+	
+	private ClassHour newClassHour(ClassHour classhour) {
+		return ClassHour.builder()
+						.beginsAt(classhour.getBeginsAt().plusDays(7))
+						.endsAt(classhour.getEndsAt().plusDays(7))
+						.roomNo(classhour.getRoomNo())
+						.status(classhour.getStatus())
+						.program(classhour.getProgram())
+						.user(classhour.getUser())
+						.subject(classhour.getSubject())
+						.build();
+	}
 	
 	private ClassHour mapToClasshour(ClassHourRequest request) {
 		User user = userRepo.findById(request.getUserId()).orElseThrow(null);
@@ -112,10 +121,21 @@ public class ClassHourServiceImpl implements ClassHourService{
 						List<ClassHour> perDayClasshour = new ArrayList<ClassHour>();
 						LocalDate date = program.getBeginsAt();
 						
+						DayOfWeek dayOfWeek = date.getDayOfWeek();
+						int end=6;
+									
+						System.out.println("OPENING DAY: "+ dayOfWeek);
+						
+						if(!dayOfWeek.equals(DayOfWeek.MONDAY))
+							end = end+(7-dayOfWeek.getValue());
+						
 						// for generating day
-						for(int day=1; day<=6; day++) {  // From Monday to Saturday (6 Working Days)
+						for(int day=1; day<=end; day++) {  // From Monday to Saturday (6 Working Days)
 							LocalTime currentTime = schedule.getOpensAt();
 							LocalDateTime lasthour = null;
+							
+							if(date.getDayOfWeek().equals(DayOfWeek.SUNDAY))
+								date=date.plusDays(1);
 							
 							// for generating class hours per day
 							for(int entry=1; entry<=schedule.getClassHoursPerDay(); entry++) { 
@@ -185,7 +205,7 @@ public class ClassHourServiceImpl implements ClassHourService{
 	/***
 	 * 
 	 * It takes the ClassHourRequest, during the progress if it fails
-	 * it will send the reason for rejection to the called method i.e, updateClasshours()	 
+	 * it will send the reason for rejection to the called method i.e, updateClasshourList()	 
 	 *  
 	 * @param request
 	 * @param isValid
@@ -197,6 +217,7 @@ public class ClassHourServiceImpl implements ClassHourService{
 			
 				AcademicProgram program = classhour.getProgram();
 				if(program.isDeleted()) throw new IllegalRequestException("Program Already Deleted");
+				
 				List<Subject> subjectList = program.getSubjectList();
 				
 				if(subjectList.isEmpty()) 
@@ -276,7 +297,7 @@ public class ClassHourServiceImpl implements ClassHourService{
 		}
 		throw new IllegalRequestException("List is EMPTY !!");
 	}
-
+	
 	public boolean isClassHoursDeleted(List<ClassHour> classhours) {
 		for(ClassHour classhour : classhours) {
 			classhour.setProgram(null);
@@ -284,5 +305,24 @@ public class ClassHourServiceImpl implements ClassHourService{
 		}
 		return true;
 	}
+
+	@Override
+	public void autoGenerateWeeklyClassHours() {
+		List<AcademicProgram> programsToAutoRepeat = academicsRepo.findByAutoRepeatScheduledTrue();	
 	
+		if(!programsToAutoRepeat.isEmpty()) {
+			programsToAutoRepeat.forEach( program ->{
+			int recordsNeeded = (program.getAcademicSchool().getSchedule().getClassHoursPerDay()) * 6;
+			List<ClassHour> classhours = classHourRepo.findLastNRecordsByProgram(program, recordsNeeded);
+				for(int i=classhours.size()-1; i>=0 ; i--) {
+					classHourRepo.save(newClassHour(classhours.get(i)));
+				}
+				program.setAutoRepeatScheduled(false);
+				academicsRepo.save(program);
+			});
+			System.out.println("Schedule Successfully Auto Repeated for the Upcoming WEEK.");
+		}else {
+			System.out.println("Auto Repeat Schedule : OFF");
+		}
+	}
 }

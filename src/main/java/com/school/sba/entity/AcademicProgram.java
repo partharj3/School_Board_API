@@ -56,4 +56,6 @@ public class AcademicProgram {
 	
 	@OneToMany(mappedBy="program", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	private List<ClassHour> classhourList;
+	
+	private boolean autoRepeatScheduled = false;
 }

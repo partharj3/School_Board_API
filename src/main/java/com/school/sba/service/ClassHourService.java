@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 
 import com.school.sba.requestdto.ClassHourRequest;
-import com.school.sba.responsedto.ClassHourResponse;
 import com.school.sba.util.ResponseStructure;
 
 public interface ClassHourService {
@@ -14,4 +13,6 @@ public interface ClassHourService {
 
 	ResponseEntity<ResponseStructure<List<String>>> updateClasshourList(List<ClassHourRequest> request);
 	
+	void autoGenerateWeeklyClassHours();
+
 }

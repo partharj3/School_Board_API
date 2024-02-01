@@ -11,5 +11,7 @@ public interface AcademicProgramRepository extends JpaRepository<AcademicProgram
 //    List<User> findUsersByUserRoleAndAcademicProgram_ProgramId(@Param("userRole") UserRole userRole, @Param("programId") int programId);
 	
 	List<AcademicProgram> findByIsDeletedTrue(); 
+
+	List<AcademicProgram> findByAutoRepeatScheduledTrue();
 	
 }

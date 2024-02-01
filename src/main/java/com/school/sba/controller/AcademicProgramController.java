@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.school.sba.entity.AcademicProgram;
 import com.school.sba.requestdto.AcademicProgramRequest;
 import com.school.sba.requestdto.SubjectRequest;
 import com.school.sba.responsedto.AcademicProgramResponse;
@@ -42,9 +43,15 @@ public class AcademicProgramController {
 		return academicsService.updateSubjectList(programId,request);
 	}
 	
+	@PreAuthorize("hasAuthority('ADMIN')")
 	@DeleteMapping("/academic-programs/{programId}")
 	public ResponseEntity<ResponseStructure<String>> deleteAcademicProgram(@PathVariable int programId){
 		return academicsService.deleteAcademicProgram(programId);
 	}
 	
+	@PreAuthorize("hasAuthority('ADMIN')")
+	@PutMapping("/academic-program/{programId}")
+	public ResponseEntity<ResponseStructure<AcademicProgramResponse>> autoRepeatScheduleON(@PathVariable int programId){
+		return academicsService.autoRepeatScheduleON(programId);
+	}
 }

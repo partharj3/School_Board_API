@@ -12,11 +12,9 @@ import com.school.sba.entity.AcademicProgram;
 import com.school.sba.entity.Subject;
 import com.school.sba.entity.User;
 import com.school.sba.enums.ProgramType;
-import com.school.sba.enums.UserRole;
 import com.school.sba.exception.AcademicProgramNotExistsByIdException;
 import com.school.sba.exception.IllegalRequestException;
 import com.school.sba.exception.SchoolNotFoundByIdException;
-import com.school.sba.exception.UserDataNotExistsException;
 import com.school.sba.repository.AcademicProgramRepository;
 import com.school.sba.repository.ClassHourRepository;
 import com.school.sba.repository.SchoolRepo;
@@ -74,6 +72,7 @@ public class AcademicProgramServiceImpl implements AcademicProgramService{
 				.beginsAt(academics.getBeginsAt())
 				.endsAt(academics.getEndsAt())
 				.subjects(subjects)
+				.autoRepeatScheduled(academics.isAutoRepeatScheduled())
 				.build();
 	}
 
@@ -215,6 +214,27 @@ public class AcademicProgramServiceImpl implements AcademicProgramService{
 		}else
 			System.out.println("Nothing to DELETE :: AcademicProgram");
 		
+	}
+	
+	
+	@Override
+	public ResponseEntity<ResponseStructure<AcademicProgramResponse>> autoRepeatScheduleON(int programId) {
+		 return academicRepo.findById(programId)
+			.map(program ->{
+				if(!program.isDeleted()) {
+					program.setAutoRepeatScheduled(true);
+					program.setProgramId(programId);
+					academicRepo.save(program);
+					
+					structure.setStatusCode(HttpStatus.OK.value());
+					structure.setMessage("Auto Repeat Schedule: ON");
+					structure.setData(mapToAcademicProgramResponse(program));
+				
+					return new ResponseEntity<ResponseStructure<AcademicProgramResponse>>(structure,HttpStatus.OK);  
+				}
+				throw new IllegalRequestException("Program Already DELETED");
+			})
+			.orElseThrow(() -> new AcademicProgramNotExistsByIdException("Failed to ON Auto Repeat Schedule"));
 	}
 	
 	/*

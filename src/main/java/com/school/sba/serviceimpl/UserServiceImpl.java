@@ -1,6 +1,7 @@
 package com.school.sba.serviceimpl;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -331,33 +332,6 @@ public class UserServiceImpl implements UserService{
 			});
 			System.out.println("Users DATA Cleared Permanently");
 		}else
-			System.out.println("Nothing to DELETE :: User");
-		
-	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+			System.out.println("Nothing to DELETE :: User");	
+	}	
 }
