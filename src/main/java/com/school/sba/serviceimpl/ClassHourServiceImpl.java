@@ -317,8 +317,6 @@ public class ClassHourServiceImpl implements ClassHourService{
 				for(int i=classhours.size()-1; i>=0 ; i--) {
 					classHourRepo.save(newClassHour(classhours.get(i)));
 				}
-				program.setAutoRepeatScheduled(false);
-				academicsRepo.save(program);
 			});
 			System.out.println("Schedule Successfully Auto Repeated for the Upcoming WEEK.");
 		}else {

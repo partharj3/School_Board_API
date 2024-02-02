@@ -222,7 +222,14 @@ public class AcademicProgramServiceImpl implements AcademicProgramService{
 		 return academicRepo.findById(programId)
 			.map(program ->{
 				if(!program.isDeleted()) {
-					program.setAutoRepeatScheduled(true);
+					if(program.getSubjectList()==null ||program.getSubjectList().isEmpty() 
+					|| program.getClasshourList()==null ||program.getClasshourList().isEmpty()
+					|| program.getUsers()==null || program.getUsers().isEmpty())
+						throw new IllegalRequestException("Users & Subject & Classhours Data Required To Auto Repeat");
+					
+					program.setAutoRepeatScheduled(!program.isAutoRepeatScheduled());
+						
+						
 					program.setProgramId(programId);
 					academicRepo.save(program);
 					

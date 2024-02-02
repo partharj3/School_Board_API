@@ -44,6 +44,6 @@ public class ScheduledJobs {
 	
 	@Scheduled(cron = "0 0 0 ? * MON")
 	public void autoRepeatSchedule() {
-		classhourService.autoGenerateWeeklyClassHours();
+	    classhourService.autoGenerateWeeklyClassHours();
 	}
 }
