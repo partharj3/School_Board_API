@@ -25,7 +25,7 @@ public class ScheduledJobs {
 	@Autowired
 	private ClassHourService classhourService;
 	
-	@Scheduled(fixedDelay = 10000l) // 5 minute (5*60*1000)
+	@Scheduled(fixedDelay = 300000l) // 5 minute (5*60*1000)
 	public void test() {
 		userService.permanentlyDeleteUsers();
 		academicService.permanentlyDeleteAcademicPrograms();

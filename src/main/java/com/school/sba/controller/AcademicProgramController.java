@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.school.sba.entity.AcademicProgram;
@@ -51,7 +52,8 @@ public class AcademicProgramController {
 	
 	@PreAuthorize("hasAuthority('ADMIN')")
 	@PutMapping("/academic-program/{programId}")
-	public ResponseEntity<ResponseStructure<AcademicProgramResponse>> autoRepeatScheduleON(@PathVariable int programId){
-		return academicsService.autoRepeatScheduleON(programId);
+	public ResponseEntity<ResponseStructure<AcademicProgramResponse>> setAutoRepeatSchedule(@PathVariable int programId,
+																			@RequestParam("auto-repeat-schedule") boolean autoRepeatSchedule){
+		return academicsService.setAutoRepeatSchedule(programId,autoRepeatSchedule);
 	}
 }

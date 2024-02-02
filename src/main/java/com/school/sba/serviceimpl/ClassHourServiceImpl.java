@@ -55,7 +55,7 @@ public class ClassHourServiceImpl implements ClassHourService{
 						.beginsAt(classhour.getBeginsAt().plusDays(7))
 						.endsAt(classhour.getEndsAt().plusDays(7))
 						.roomNo(classhour.getRoomNo())
-						.status(classhour.getStatus())
+						.status(ClassStatus.SCHEDULED)
 						.program(classhour.getProgram())
 						.user(classhour.getUser())
 						.subject(classhour.getSubject())
@@ -102,7 +102,7 @@ public class ClassHourServiceImpl implements ClassHourService{
 	}
 	
 	private boolean isLunchTime(LocalTime start, LocalTime end, Schedule schedule) {
-		LocalTime lunchTime = schedule.getLunchTime().plusHours(12);
+		LocalTime lunchTime = schedule.getLunchTime();
 		return (lunchTime.isAfter(start) && lunchTime.isBefore(end) || lunchTime.equals(start));
 	}
 	
@@ -311,12 +311,21 @@ public class ClassHourServiceImpl implements ClassHourService{
 		List<AcademicProgram> programsToAutoRepeat = academicsRepo.findByAutoRepeatScheduledTrue();	
 	
 		if(!programsToAutoRepeat.isEmpty()) {
+			
+			List<ClassHour> toBeSaved = new ArrayList<>();
+			
 			programsToAutoRepeat.forEach( program ->{
 			int recordsNeeded = (program.getAcademicSchool().getSchedule().getClassHoursPerDay()) * 6;
 			List<ClassHour> classhours = classHourRepo.findLastNRecordsByProgram(program, recordsNeeded);
-				for(int i=classhours.size()-1; i>=0 ; i--) {
-					classHourRepo.save(newClassHour(classhours.get(i)));
+			
+				if(!classhours.isEmpty()) {
+					for(int i=classhours.size()-1; i>=0 ; i--) {
+						toBeSaved.add(newClassHour(classhours.get(i)));
+					}
+					classHourRepo.saveAll(toBeSaved);
 				}
+				else
+					System.out.println("No RECORDS Found to Auto Repeat");
 			});
 			System.out.println("Schedule Successfully Auto Repeated for the Upcoming WEEK.");
 		}else {

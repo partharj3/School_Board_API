@@ -3,7 +3,6 @@ package com.school.sba.entity;
 import java.time.Duration;
 import java.time.LocalTime;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;

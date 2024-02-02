@@ -61,9 +61,12 @@ public class AcademicProgramServiceImpl implements AcademicProgramService{
 	
 	private AcademicProgramResponse mapToAcademicProgramResponse(AcademicProgram academics) {
 		List<String> subjects = new ArrayList<>();
-		academics.getSubjectList().forEach(subject -> {
-			subjects.add(subject.getSubjectName());
-		});
+		if(academics.getSubjectList()!=null) {
+			academics.getSubjectList()
+			.forEach(subject -> {
+				subjects.add(subject.getSubjectName());
+			});
+		}
 		
 		return AcademicProgramResponse.builder()
 				.programId(academics.getProgramId())
@@ -218,7 +221,7 @@ public class AcademicProgramServiceImpl implements AcademicProgramService{
 	
 	
 	@Override
-	public ResponseEntity<ResponseStructure<AcademicProgramResponse>> autoRepeatScheduleON(int programId) {
+	public ResponseEntity<ResponseStructure<AcademicProgramResponse>> setAutoRepeatSchedule(int programId,boolean autoRepeatSchedule) {
 		 return academicRepo.findById(programId)
 			.map(program ->{
 				if(!program.isDeleted()) {
@@ -227,14 +230,13 @@ public class AcademicProgramServiceImpl implements AcademicProgramService{
 					|| program.getUsers()==null || program.getUsers().isEmpty())
 						throw new IllegalRequestException("Users & Subject & Classhours Data Required To Auto Repeat");
 					
-					program.setAutoRepeatScheduled(!program.isAutoRepeatScheduled());
-						
+					program.setAutoRepeatScheduled(autoRepeatSchedule);
 						
 					program.setProgramId(programId);
 					academicRepo.save(program);
 					
 					structure.setStatusCode(HttpStatus.OK.value());
-					structure.setMessage("Auto Repeat Schedule: ON");
+					structure.setMessage("Auto Repeat Schedule: "+autoRepeatSchedule);
 					structure.setData(mapToAcademicProgramResponse(program));
 				
 					return new ResponseEntity<ResponseStructure<AcademicProgramResponse>>(structure,HttpStatus.OK);  

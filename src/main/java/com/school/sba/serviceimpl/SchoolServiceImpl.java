@@ -136,36 +136,4 @@ public class SchoolServiceImpl implements SchoolService{
 	        System.out.println("Nothing to DELETE :: School");
 	    }
 	}
-
-	
-
-//	@Override
-//	public ResponseEntity<String> updateSchoolById(School school, int schoolId) {
-//		Optional<School> object = schoolrepo.findById(schoolId);
-//		if(object.isPresent()) {
-//			School existingObject = object.get();
-//			School newObject = new School();
-//			newObject.setSchoolId(existingObject.getSchoolId());
-//			newObject.setSchoolName(school.getSchoolName());
-//			newObject.setSchoolAddress(school.getSchoolAddress());
-//			newObject.setSchoolContact(school.getSchoolContact());
-//			newObject.setSchoolEmail(school.getSchoolEmail());
-//			
-//			schoolrepo.save(newObject);
-//			return new ResponseEntity<String>("Data updated Successfully", HttpStatus.OK);
-//		}
-//		else
-//			throw new SchoolNotFoundById("No School found by this ID to UPDATE");
-//	}
-//
-//	@Override
-//	public ResponseEntity<String> findSchoolById(int schoolId) {
-//		Optional<School> obj = schoolrepo.findById(schoolId);
-//		if(obj.isPresent()) {
-//			return new ResponseEntity<String>("School Record found for ID "+schoolId,HttpStatus.FOUND);
-//		}
-//		else
-//			throw new SchoolNotFoundById("No School found for ID: "+schoolId);
-//	}
-
 }

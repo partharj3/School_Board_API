@@ -1,6 +1,7 @@
 package com.school.sba.serviceimpl;
 
 import java.time.Duration;
+import java.time.LocalTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -61,28 +62,81 @@ public class ScheduleServiceImpl implements ScheduleService{
 	@Override
 	public ResponseEntity<ResponseStructure<ScheduleResponse>> addSchedule(ScheduleRequest request, int schoolId) {
 		return schoolrepo.findById(schoolId)
-				.map(schoolObj -> {
-					if(schoolObj.getSchedule()==null) 
-					{
-						Schedule schedule = mapToSchedule(request);
-						schedule.setSchool(schoolObj);
-						schedulerepo.save(schedule);
-						schoolObj.setSchedule(schedule);
-						schoolrepo.save(schoolObj);
+				.map(school -> {
+					if(school.getSchedule()==null) 
+					{						
+						LocalTime startTime = request.getOpensAt(); 
+						LocalTime endTime  =request.getClosesAt();
+						LocalTime breakAt = request.getBreakTime();
+						LocalTime lunchAt = request.getLunchTime();
+						int classDuration = request.getClassHoursLengthInMinutes();
+						int breakDuration = request.getBreakLengthInMinutes();
+						int lunchDuration = request.getLunchLengthInMinutes();
 						
-						structure.setStatusCode(HttpStatus.CREATED.value());
-						structure.setMessage("Schedule Created for the School "+schoolObj.getSchoolName());
-						structure.setData(mapToScheduleResponse(schedule));
-					
-						return new ResponseEntity<ResponseStructure<ScheduleResponse>>(structure, HttpStatus.CREATED);
-					}
-					else
-						throw new DataAlreadyExistsException("Failed to CREATE Schedule a new Schedule");
+						if(startTime.isBefore(breakAt) && breakAt.isBefore(lunchAt) && lunchAt.isBefore(endTime)) {
+							
+							// check: is break time & lunch time coming closer? 
+							if(breakAt.plusMinutes(breakDuration+classDuration).isBefore(lunchAt) 
+					        || breakAt.plusMinutes(breakDuration+classDuration).equals(lunchAt)) {
+								
+								Schedule schedule=null;
+								
+								int totalTime = (int)(Duration.between(startTime, endTime).toMinutes());
+								int actualTime = (request.getClassHoursPerDay()*classDuration + lunchDuration+breakDuration);
+								if(totalTime == actualTime) {
+									String message = "";
+										
+										message = returnMessage(startTime,breakAt,classDuration);
+
+										if(message.equals("")) {
+											startTime = breakAt.plusMinutes(breakDuration);
+											message=returnMessage(startTime,lunchAt,classDuration);
+											
+											if(message.equals("")) {
+												startTime = lunchAt.plusMinutes(lunchDuration);
+												message=returnMessage(startTime,endTime,classDuration);
+												
+												if(message.equals("")) {
+													schedule = mapToSchedule(request);
+													schedule.setSchool(school);
+													schedulerepo.save(schedule);
+													school.setSchedule(schedule);
+													schoolrepo.save(school);
+													
+													structure.setMessage(message+school.getSchoolName());
+													structure.setStatusCode(HttpStatus.CREATED.value());
+													structure.setData(mapToScheduleResponse(schedule));
+												
+													return new ResponseEntity<ResponseStructure<ScheduleResponse>>(structure, HttpStatus.CREATED);
+												}
+												throw new IllegalRequestException(message);
+											}
+											throw new IllegalRequestException(message);
+										}
+										throw new IllegalRequestException(message);
+									}	
+									throw new IllegalRequestException("Actual Time Not Ending with Closing Time");
+								}
+								throw new IllegalRequestException("Break Time and Lunch Time are very CLOSER");	
+							}
+							throw new IllegalRequestException("Start Time and End Time are InValid");
+						}
+						throw new DataAlreadyExistsException("Failed to CREATE a new Schedule");
 				})
 				.orElseThrow(()-> new SchoolNotFoundByIdException("Failed to CREATE Schedule"));
 		
 	}
-
+	
+	private String returnMessage(LocalTime start, LocalTime end, int duration) {
+		
+		int balanceTime=(int)(Duration.between(start,end).toMinutes()) % duration;
+		if(balanceTime!=0) {
+			return "Classhour timing exceeding "+end+". SUGESSTION: "+end.minusMinutes(balanceTime)
+					+" OR "+(end.plusMinutes(duration-balanceTime)+" is EXPECTED");
+		}
+		return "";
+	}
+	
 	@Override
 	public ResponseEntity<ResponseStructure<ScheduleResponse>> findSchedule(int schoolId) {
 		return schoolrepo.findById(schoolId)

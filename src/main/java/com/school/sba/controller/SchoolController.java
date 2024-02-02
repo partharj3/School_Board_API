@@ -34,19 +34,4 @@ public class SchoolController {
 		return schoolService.deleteSchool(schoolId);
 	}
 	
-//	@PutMapping("/schools/{schoolId}")
-//	public ResponseEntity<String> updateSchoolById(@RequestBody School school, @PathVariable int schoolId){
-//		return service.updateSchoolById(school, schoolId);
-//	}
-//	
-//	@GetMapping("/schools/{schoolId}")
-//	public ResponseEntity<String> findSchoolById(@PathVariable int schoolId){
-//		return service.findSchoolById(schoolId);
-//	}
-//	
-//	@DeleteMapping("/schools/{schoolId}")
-//	public ResponseEntity<String> deleteSchool(@PathVariable int schoolId){
-//		return service.deleteSchool(schoolId);
-//	}
-	
 }

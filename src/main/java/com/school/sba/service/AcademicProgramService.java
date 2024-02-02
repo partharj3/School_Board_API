@@ -4,12 +4,9 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 
-import com.school.sba.entity.AcademicProgram;
-import com.school.sba.enums.UserRole;
 import com.school.sba.requestdto.AcademicProgramRequest;
 import com.school.sba.requestdto.SubjectRequest;
 import com.school.sba.responsedto.AcademicProgramResponse;
-import com.school.sba.responsedto.UserResponse;
 import com.school.sba.util.ResponseStructure;
 
 public interface AcademicProgramService {
@@ -24,6 +21,6 @@ public interface AcademicProgramService {
 	
 	void permanentlyDeleteAcademicPrograms();
 
-	ResponseEntity<ResponseStructure<AcademicProgramResponse>> autoRepeatScheduleON(int programId);
+	ResponseEntity<ResponseStructure<AcademicProgramResponse>> setAutoRepeatSchedule(int programId,boolean autoRepeatSchedule);
 }
 

@@ -7,7 +7,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @SpringBootApplication
 public class SchoolBoardApiApplication {
-	
 	public static void main(String[] args) {
 		SpringApplication.run(SchoolBoardApiApplication.class, args);
 		System.out.println("Let's get Started...");
