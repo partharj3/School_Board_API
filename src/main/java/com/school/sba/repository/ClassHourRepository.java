@@ -19,7 +19,7 @@ public interface ClassHourRepository extends JpaRepository<ClassHour, Integer>{
 	 **/
 	boolean existsByBeginsAtIsLessThanEqualAndEndsAtIsGreaterThanEqualAndRoomNo( LocalDateTime beginsAt, LocalDateTime endsAt, int roomNo);
 	
-//	List<ClassHour> findTopNByProgramProgramIdOrderByEndsAtDesc(int programId, int n);
+	List<ClassHour> findAllByProgramAndBeginsAtBetween(AcademicProgram program, LocalDateTime beginsAt, LocalDateTime endsAt);
 	
 //	@Query(value = "SELECT * FROM class_hour ch WHERE ch.program_program_id = :programId ORDER BY ch.ends_at DESC LIMIT :n", nativeQuery = true)
 //	List<ClassHour> findLastNClassHoursByProgramId(@Param("programId") int programId, @Param("n") int n);

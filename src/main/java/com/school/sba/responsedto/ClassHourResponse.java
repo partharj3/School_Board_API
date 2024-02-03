@@ -2,7 +2,6 @@ package com.school.sba.responsedto;
 
 import java.time.LocalDateTime;
 
-import com.school.sba.entity.AcademicProgram;
 import com.school.sba.enums.ClassStatus;
 
 import lombok.AllArgsConstructor;

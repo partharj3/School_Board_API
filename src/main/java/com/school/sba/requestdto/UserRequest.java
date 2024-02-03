@@ -1,7 +1,5 @@
 package com.school.sba.requestdto;
 
-import com.school.sba.enums.UserRole;
-
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

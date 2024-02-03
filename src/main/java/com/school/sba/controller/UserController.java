@@ -14,8 +14,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.school.sba.enums.UserRole;
-import com.school.sba.repository.AcademicProgramRepository;
-import com.school.sba.repository.UserRepository;
 import com.school.sba.requestdto.UserRequest;
 import com.school.sba.responsedto.UserResponse;
 import com.school.sba.service.UserService;
@@ -26,9 +24,6 @@ import jakarta.validation.Valid;
 @RestController
 public class UserController {
 
-	@Autowired
-	private AcademicProgramRepository arepo;
-	
 	@Autowired
 	private UserService userService;
 	

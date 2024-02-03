@@ -73,11 +73,9 @@ public class ScheduleServiceImpl implements ScheduleService{
 						int breakDuration = request.getBreakLengthInMinutes();
 						int lunchDuration = request.getLunchLengthInMinutes();
 						
-						if(startTime.isBefore(breakAt) && breakAt.isBefore(lunchAt) && lunchAt.isBefore(endTime)) {
-							
-							// check: is break time & lunch time coming closer? 
-							if(breakAt.plusMinutes(breakDuration+classDuration).isBefore(lunchAt) 
-					        || breakAt.plusMinutes(breakDuration+classDuration).equals(lunchAt)) {
+						if(startTime.plusMinutes(classDuration).isBefore(breakAt) && 
+						     breakAt.plusMinutes(breakDuration+classDuration).isBefore(lunchAt) && 
+						     lunchAt.plusMinutes(lunchDuration+classDuration).isBefore(endTime)) {
 								
 								Schedule schedule=null;
 								
@@ -88,28 +86,23 @@ public class ScheduleServiceImpl implements ScheduleService{
 										
 										message = returnMessage(startTime,breakAt,classDuration);
 
-										if(message.equals("")) {
+										if(message.equals(null)) {
 											startTime = breakAt.plusMinutes(breakDuration);
 											message=returnMessage(startTime,lunchAt,classDuration);
 											
-											if(message.equals("")) {
-												startTime = lunchAt.plusMinutes(lunchDuration);
-												message=returnMessage(startTime,endTime,classDuration);
+											if(message.equals(null)) {
 												
-												if(message.equals("")) {
-													schedule = mapToSchedule(request);
-													schedule.setSchool(school);
-													schedulerepo.save(schedule);
-													school.setSchedule(schedule);
-													schoolrepo.save(school);
-													
-													structure.setMessage(message+school.getSchoolName());
-													structure.setStatusCode(HttpStatus.CREATED.value());
-													structure.setData(mapToScheduleResponse(schedule));
-												
-													return new ResponseEntity<ResponseStructure<ScheduleResponse>>(structure, HttpStatus.CREATED);
-												}
-												throw new IllegalRequestException(message);
+											schedule = mapToSchedule(request);
+											schedule.setSchool(school);
+											schedulerepo.save(schedule);
+											school.setSchedule(schedule);
+											schoolrepo.save(school);
+											
+											structure.setMessage(message+school.getSchoolName());
+											structure.setStatusCode(HttpStatus.CREATED.value());
+											structure.setData(mapToScheduleResponse(schedule));
+										
+											return new ResponseEntity<ResponseStructure<ScheduleResponse>>(structure, HttpStatus.CREATED);
 											}
 											throw new IllegalRequestException(message);
 										}
@@ -117,9 +110,7 @@ public class ScheduleServiceImpl implements ScheduleService{
 									}	
 									throw new IllegalRequestException("Actual Time Not Ending with Closing Time");
 								}
-								throw new IllegalRequestException("Break Time and Lunch Time are very CLOSER");	
-							}
-							throw new IllegalRequestException("Start Time and End Time are InValid");
+								throw new IllegalRequestException("Mention times Expected to be CLOSER or NON-SEQUENTIAL.");	
 						}
 						throw new DataAlreadyExistsException("Failed to CREATE a new Schedule");
 				})
@@ -134,7 +125,7 @@ public class ScheduleServiceImpl implements ScheduleService{
 			return "Classhour timing exceeding "+end+". SUGESSTION: "+end.minusMinutes(balanceTime)
 					+" OR "+(end.plusMinutes(duration-balanceTime)+" is EXPECTED");
 		}
-		return "";
+		return null;
 	}
 	
 	@Override

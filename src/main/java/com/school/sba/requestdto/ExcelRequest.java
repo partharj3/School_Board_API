@@ -11,13 +11,12 @@ import lombok.Setter;
 @Getter
 @Setter
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
-public class AcademicProgramRequest {
+@NoArgsConstructor
+public class ExcelRequest {
 
-	private String programType;
-	private String programName;
-	private LocalDate beginsAt;
-	private LocalDate endsAt;
+	private LocalDate fromDate;
+	private LocalDate toDate;
+	private String filePath;
 	
 }
