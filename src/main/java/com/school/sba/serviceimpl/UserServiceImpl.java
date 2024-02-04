@@ -1,13 +1,11 @@
 package com.school.sba.serviceimpl;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -190,7 +188,12 @@ public class UserServiceImpl implements UserService{
 								if(!program.getSubjectList().contains(user.getSubject())){
 									throw new IllegalRequestException("Irrelevant TEACHER to the Academic Program");
 								}
-							}
+								
+								// To avoid same subject holding teacher.								
+								userList.removeIf(existingUser ->
+							            existingUser.getUserRole().equals(UserRole.TEACHER) &&
+							            existingUser.getSubject().getSubjectId() == user.getSubject().getSubjectId());
+							   }
 							
 							user.getAcademicprograms().add(program);
 							userRepo.save(user);

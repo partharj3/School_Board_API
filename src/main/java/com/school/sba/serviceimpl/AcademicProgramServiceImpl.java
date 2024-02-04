@@ -19,7 +19,6 @@ import com.school.sba.repository.AcademicProgramRepository;
 import com.school.sba.repository.ClassHourRepository;
 import com.school.sba.repository.SchoolRepo;
 import com.school.sba.repository.SubjectRepository;
-import com.school.sba.repository.UserRepository;
 import com.school.sba.requestdto.AcademicProgramRequest;
 import com.school.sba.requestdto.SubjectRequest;
 import com.school.sba.responsedto.AcademicProgramResponse;
@@ -38,9 +37,6 @@ public class AcademicProgramServiceImpl implements AcademicProgramService{
 	
 	@Autowired
 	private SubjectRepository subjectrepo;
-	
-	@Autowired
-	private UserRepository userRepo;
 	
 	@Autowired
 	private ClassHourRepository classhourRepo;
@@ -245,12 +241,4 @@ public class AcademicProgramServiceImpl implements AcademicProgramService{
 			})
 			.orElseThrow(() -> new AcademicProgramNotExistsByIdException("Failed to ON Auto Repeat Schedule"));
 	}
-	
-	/*
-	 * private static String removeUpperCamelCaseAndExtraSpace(String str) { return
-	 * str .replaceAll("(\\p{Lu})", " $1") // removes camel casing
-	 * .replaceAll("\\s+", " ") // removes extra white spaces .trim().toLowerCase();
-	 * // removes leading, trailing white spaces }
-	 */
-	
 }

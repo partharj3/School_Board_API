@@ -7,7 +7,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import com.school.sba.entity.Schedule;
 import com.school.sba.entity.School;
 import com.school.sba.enums.UserRole;
 import com.school.sba.exception.DataAlreadyExistsException;
@@ -16,7 +15,6 @@ import com.school.sba.exception.SchoolNotFoundByIdException;
 import com.school.sba.exception.UnauthorizedRoleException;
 import com.school.sba.exception.UserNotFoundByIdException;
 import com.school.sba.repository.AcademicProgramRepository;
-import com.school.sba.repository.ScheduleRepository;
 import com.school.sba.repository.SchoolRepo;
 import com.school.sba.repository.UserRepository;
 import com.school.sba.requestdto.SchoolRequest;
@@ -35,9 +33,6 @@ public class SchoolServiceImpl implements SchoolService{
 	
 	@Autowired
 	private AcademicProgramRepository academicsRepo;
-	
-	@Autowired
-	private ScheduleRepository scheduleRepo;
 	
 	@Autowired
 	private ResponseStructure<SchoolResponse> structure;
